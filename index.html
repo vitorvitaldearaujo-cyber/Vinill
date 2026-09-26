@@ -1,0 +1,1987 @@
+<!DOCTYPE html>
+<html lang="pt-BR" class="dark">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+  <meta name="theme-color" content="#020617" id="meta-theme-color">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="mobile-web-app-capable" content="yes">
+  <title>Minha Música Hi-Fi — Player de Alta Resolução</title>
+
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&family=JetBrains+Mono:wght@400;500;600;700&display=swap" rel="stylesheet">
+
+  <script>
+    tailwind.config = {
+      darkMode: 'class',
+      theme: {
+        extend: {
+          colors: {
+            brand: { 50:'#f0f3ff', 400:'#818cf8', 500:'#6366f1', 600:'#4f46e5', 900:'#1e1b4b' }
+          },
+          fontFamily: {
+            sans: ['Inter', 'system-ui', 'sans-serif'],
+            mono: ['JetBrains Mono', 'monospace']
+          },
+          animation: {
+            'spin-slow': 'spin 18s linear infinite',
+            'pulse-soft': 'pulseSoft 3s ease-in-out infinite',
+            'island': 'islandPulse 2.2s cubic-bezier(0.4,0,0.6,1) infinite',
+            'fade-in': 'fadeIn 0.35s ease-out'
+          },
+          keyframes: {
+            pulseSoft: {
+              '0%,100%': { opacity: '0.45', transform: 'scale(1)' },
+              '50%': { opacity: '0.85', transform: 'scale(1.04)' }
+            },
+            islandPulse: {
+              '0%,100%': { boxShadow: '0 0 18px rgba(99,102,241,0.35)' },
+              '50%': { boxShadow: '0 0 28px rgba(168,85,247,0.55)' }
+            },
+            fadeIn: {
+              from: { opacity: '0', transform: 'translateY(8px)' },
+              to: { opacity: '1', transform: 'translateY(0)' }
+            }
+          }
+        }
+      }
+    }
+  </script>
+
+  <style>
+    :root {
+      --dynamic-accent: 99, 102, 241;
+      --dynamic-bg-glow: rgba(99, 102, 241, 0.28);
+      --dynamic-soft: rgba(99, 102, 241, 0.12);
+      --app-bg: #020617;
+      --app-text: #f1f5f9;
+      --glass-bg: rgba(15, 23, 42, 0.72);
+      --glass-border: rgba(255,255,255,0.07);
+      --card-bg: rgba(255,255,255,0.035);
+      --card-hover: rgba(255,255,255,0.07);
+      --card-border: rgba(255,255,255,0.06);
+      --muted: #94a3b8;
+      --subtle: #64748b;
+      --input-bg: rgba(15, 23, 42, 0.7);
+      --input-border: #1e293b;
+      --scroll-thumb: rgba(255,255,255,0.18);
+    }
+
+    /* Light theme */
+    html.light {
+      --app-bg: #f1f5f9;
+      --app-text: #0f172a;
+      --glass-bg: rgba(255, 255, 255, 0.78);
+      --glass-border: rgba(0,0,0,0.08);
+      --card-bg: rgba(255,255,255,0.65);
+      --card-hover: rgba(255,255,255,0.9);
+      --card-border: rgba(0,0,0,0.06);
+      --muted: #64748b;
+      --subtle: #94a3b8;
+      --input-bg: rgba(255,255,255,0.9);
+      --input-border: #e2e8f0;
+      --scroll-thumb: rgba(0,0,0,0.15);
+    }
+
+    /* AMOLED pure black */
+    html.amoled {
+      --app-bg: #000000;
+      --app-text: #f1f5f9;
+      --glass-bg: rgba(10, 10, 12, 0.92);
+      --glass-border: rgba(255,255,255,0.06);
+      --card-bg: rgba(255,255,255,0.04);
+      --card-hover: rgba(255,255,255,0.08);
+      --card-border: rgba(255,255,255,0.05);
+      --muted: #94a3b8;
+      --subtle: #64748b;
+      --input-bg: rgba(18, 18, 20, 0.95);
+      --input-border: #1a1a1c;
+      --scroll-thumb: rgba(255,255,255,0.12);
+    }
+
+    * { -webkit-tap-highlight-color: transparent; box-sizing: border-box; }
+    html, body { height: 100%; overscroll-behavior: none; }
+    body {
+      background: var(--app-bg);
+      color: var(--app-text);
+      font-family: Inter, system-ui, sans-serif;
+      user-select: none;
+      overflow: hidden;
+      transition: background 0.35s ease, color 0.35s ease;
+    }
+    .app-height { height: 100vh; height: 100dvh; }
+
+    ::-webkit-scrollbar { width: 5px; height: 5px; }
+    ::-webkit-scrollbar-track { background: transparent; }
+    ::-webkit-scrollbar-thumb { background: var(--scroll-thumb); border-radius: 99px; }
+
+    .dyn-bg { background-color: rgb(var(--dynamic-accent)); }
+    .dyn-text { color: rgb(var(--dynamic-accent)); }
+    .dyn-border { border-color: rgb(var(--dynamic-accent)); }
+    .dyn-glow { box-shadow: 0 12px 40px -12px var(--dynamic-bg-glow); }
+    .dyn-soft { background: var(--dynamic-soft); }
+
+    .glass {
+      background: var(--glass-bg);
+      backdrop-filter: blur(24px);
+      -webkit-backdrop-filter: blur(24px);
+      border: 1px solid var(--glass-border);
+      transition: background 0.35s, border-color 0.35s;
+    }
+    .glass-card {
+      background: var(--card-bg);
+      backdrop-filter: blur(14px);
+      border: 1px solid var(--card-border);
+      transition: background 0.2s, border-color 0.2s;
+    }
+    .glass-card:hover {
+      background: var(--card-hover);
+    }
+    .glass-card.active-track {
+      background: rgba(var(--dynamic-accent), 0.12);
+      border-color: rgba(var(--dynamic-accent), 0.35);
+    }
+
+    input[type=range] {
+      -webkit-appearance: none;
+      appearance: none;
+      background: rgba(128,128,128,0.25);
+      border-radius: 999px;
+      height: 5px;
+      outline: none;
+    }
+    input[type=range]::-webkit-slider-thumb {
+      -webkit-appearance: none;
+      height: 15px; width: 15px;
+      border-radius: 50%;
+      background: #fff;
+      cursor: pointer;
+      box-shadow: 0 0 12px rgba(0,0,0,0.35);
+      transition: transform 0.12s;
+    }
+    html.light input[type=range]::-webkit-slider-thumb {
+      background: rgb(var(--dynamic-accent));
+      box-shadow: 0 0 8px rgba(0,0,0,0.2);
+    }
+    input[type=range]::-webkit-slider-thumb:hover { transform: scale(1.2); }
+    input[type=range].eq-slider {
+      writing-mode: vertical-lr;
+      direction: rtl;
+      width: 6px;
+      height: 110px;
+    }
+
+    .vinyl-spin { animation: spin 22s linear infinite; }
+    .vinyl-paused { animation-play-state: paused; }
+
+    .select-mode .track-check { display: flex !important; }
+    .track-check { display: none; }
+
+    .modal-backdrop {
+      background: rgba(0, 0, 0, 0.55);
+      backdrop-filter: blur(12px);
+    }
+    html.light .modal-backdrop {
+      background: rgba(15, 23, 42, 0.4);
+    }
+
+    .toast-enter { transform: translateX(120%); opacity: 0; }
+    .toast-show { transform: translateX(0); opacity: 1; }
+    .safe-bottom { padding-bottom: env(safe-area-inset-bottom, 0); }
+
+    .text-muted { color: var(--muted); }
+    .text-subtle { color: var(--subtle); }
+    .bg-input {
+      background: var(--input-bg);
+      border-color: var(--input-border);
+    }
+
+    /* Theme option selected state */
+    .theme-opt.selected {
+      border-color: rgb(var(--dynamic-accent));
+      background: rgba(var(--dynamic-accent), 0.12);
+    }
+
+    /* Import drop zone */
+    .drop-zone-active {
+      border-color: rgb(var(--dynamic-accent)) !important;
+      background: rgba(var(--dynamic-accent), 0.08) !important;
+    }
+  </style>
+</head>
+<body class="app-height">
+
+  <!-- Ambient glow -->
+  <div id="ambient" class="fixed inset-0 pointer-events-none z-0 transition-all duration-1000 opacity-50">
+    <div class="absolute -top-40 -left-40 w-[28rem] h-[28rem] rounded-full blur-3xl transition-colors duration-1000" style="background:var(--dynamic-bg-glow)"></div>
+    <div class="absolute top-1/3 -right-40 w-[26rem] h-[26rem] rounded-full blur-3xl transition-colors duration-1000" style="background:var(--dynamic-bg-glow)"></div>
+    <div class="absolute -bottom-40 left-1/4 w-[24rem] h-[24rem] rounded-full blur-3xl transition-colors duration-1000" style="background:var(--dynamic-bg-glow)"></div>
+  </div>
+
+  <div class="relative z-10 flex flex-col h-full max-w-7xl mx-auto px-2 sm:px-5 lg:px-8 py-2">
+
+    <!-- HEADER -->
+    <header class="flex items-center justify-between gap-2 py-2.5 px-3 rounded-3xl glass mb-3 shadow-2xl relative z-30 shrink-0">
+      <div class="flex items-center gap-3 min-w-0">
+        <div class="w-10 h-10 rounded-2xl dyn-bg flex items-center justify-center text-white shadow-lg dyn-glow shrink-0 transition-colors duration-500">
+          <i class="fa-solid fa-compact-disc text-lg animate-spin-slow"></i>
+        </div>
+        <div class="min-w-0">
+          <h1 class="font-extrabold text-sm sm:text-base tracking-tight truncate">
+            Minha Música <span class="dyn-text font-black transition-colors duration-500">Hi-Fi</span>
+          </h1>
+          <p class="text-[9px] sm:text-[10px] text-muted uppercase tracking-[0.2em] font-mono">32-Bit · Lossless Engine</p>
+        </div>
+      </div>
+
+      <div id="dynamic-island" class="hidden md:flex items-center gap-2.5 px-3.5 py-1.5 rounded-full glass text-xs shadow-xl animate-island cursor-pointer transition-all" onclick="openFullPlayer()">
+        <div class="relative w-7 h-7 rounded-full overflow-hidden shrink-0 ring-1 ring-white/10">
+          <img id="island-cover" src="https://placehold.co/80x80/1e1b4b/6366f1?text=Hi-Fi" class="w-full h-full object-cover" alt="">
+        </div>
+        <div class="flex flex-col max-w-[130px] truncate">
+          <span id="island-title" class="font-semibold truncate text-[11px]">Pronto para tocar</span>
+          <span id="island-artist" class="text-muted truncate text-[10px]">Hi-Fi Audio</span>
+        </div>
+        <div class="flex items-end gap-0.5 h-3.5 px-0.5">
+          <div class="w-0.5 bg-indigo-400 rounded-full h-full animate-bounce"></div>
+          <div class="w-0.5 bg-purple-400 rounded-full h-2/3 animate-bounce" style="animation-delay:.15s"></div>
+          <div class="w-0.5 bg-pink-400 rounded-full h-4/5 animate-bounce" style="animation-delay:.3s"></div>
+        </div>
+      </div>
+
+      <div class="flex items-center gap-1.5 sm:gap-2 shrink-0">
+        <button id="import-btn" class="flex items-center gap-1.5 px-2.5 sm:px-3 py-1.5 rounded-xl text-[11px] font-medium glass-card active:scale-95 transition-all" title="Importar músicas do celular">
+          <i class="fa-solid fa-folder-open text-indigo-400"></i>
+          <span class="hidden sm:inline">Importar</span>
+        </button>
+        <!-- Hidden inputs for different import methods -->
+        <input type="file" id="file-input" multiple accept="audio/*,.flac,.wav,.mp3,.m4a,.aac,.ogg,.opus,.webm,.aiff,.aif,.dsd,.dsf,.alac" class="hidden">
+        <input type="file" id="folder-input" webkitdirectory directory multiple accept="audio/*,.flac,.wav,.mp3,.m4a,.aac,.ogg,.opus,.webm,.aiff,.aif,.dsd,.dsf,.alac" class="hidden">
+        <div id="hires-badge" class="px-2 py-1 rounded-lg text-[9px] sm:text-[10px] font-mono font-bold bg-amber-500/15 text-amber-500 border border-amber-500/25 flex items-center gap-1">
+          <i class="fa-solid fa-bolt text-[10px]"></i>
+          <span>LDAC · 96kHz</span>
+        </div>
+      </div>
+    </header>
+
+    <!-- MAIN -->
+    <div class="flex-1 flex overflow-hidden gap-3 pb-[4.5rem] md:pb-24 min-h-0">
+
+      <!-- SIDEBAR -->
+      <aside class="hidden lg:flex flex-col w-60 rounded-3xl glass p-3.5 space-y-5 shrink-0">
+        <div class="space-y-0.5">
+          <p class="px-2.5 text-[9px] font-bold uppercase tracking-wider text-subtle mb-1">Biblioteca</p>
+          <button onclick="switchTab('tracks')" id="nav-tracks" class="nav-btn active flex items-center gap-3 w-full px-3 py-2.5 rounded-2xl text-sm font-medium transition-all bg-black/5 dark:bg-white/10">
+            <i class="fa-solid fa-music text-indigo-400 w-4"></i><span>Músicas</span>
+            <span id="track-count" class="ml-auto text-[10px] px-2 py-0.5 rounded-full bg-black/10 dark:bg-slate-800 text-muted">0</span>
+          </button>
+          <button onclick="switchTab('albums')" id="nav-albums" class="nav-btn flex items-center gap-3 w-full px-3 py-2.5 rounded-2xl text-sm font-medium text-muted hover:bg-black/5 dark:hover:bg-white/5 transition-all">
+            <i class="fa-solid fa-compact-disc text-purple-400 w-4"></i><span>Álbuns</span>
+          </button>
+          <button onclick="switchTab('artists')" id="nav-artists" class="nav-btn flex items-center gap-3 w-full px-3 py-2.5 rounded-2xl text-sm font-medium text-muted hover:bg-black/5 dark:hover:bg-white/5 transition-all">
+            <i class="fa-solid fa-microphone-lines text-pink-400 w-4"></i><span>Artistas</span>
+          </button>
+          <button onclick="switchTab('playlists')" id="nav-playlists" class="nav-btn flex items-center gap-3 w-full px-3 py-2.5 rounded-2xl text-sm font-medium text-muted hover:bg-black/5 dark:hover:bg-white/5 transition-all">
+            <i class="fa-solid fa-list-ul text-emerald-400 w-4"></i><span>Playlists</span>
+          </button>
+        </div>
+        <div class="space-y-0.5">
+          <p class="px-2.5 text-[9px] font-bold uppercase tracking-wider text-subtle mb-1">Áudio</p>
+          <button onclick="switchTab('equalizer')" id="nav-equalizer" class="nav-btn flex items-center gap-3 w-full px-3 py-2.5 rounded-2xl text-sm font-medium text-muted hover:bg-black/5 dark:hover:bg-white/5 transition-all">
+            <i class="fa-solid fa-sliders text-amber-400 w-4"></i><span>Equalizador</span>
+          </button>
+          <button onclick="switchTab('quality')" id="nav-quality" class="nav-btn flex items-center gap-3 w-full px-3 py-2.5 rounded-2xl text-sm font-medium text-muted hover:bg-black/5 dark:hover:bg-white/5 transition-all">
+            <i class="fa-solid fa-headset text-cyan-400 w-4"></i><span>Qualidade Hi-Res</span>
+          </button>
+          <button onclick="switchTab('settings')" id="nav-settings" class="nav-btn flex items-center gap-3 w-full px-3 py-2.5 rounded-2xl text-sm font-medium text-muted hover:bg-black/5 dark:hover:bg-white/5 transition-all">
+            <i class="fa-solid fa-gear text-subtle w-4"></i><span>Configurações</span>
+          </button>
+        </div>
+        <div class="mt-auto p-3 rounded-2xl glass-card text-[10px] text-muted space-y-2">
+          <div class="flex justify-between items-center">
+            <span>Formatos</span>
+            <span class="text-amber-500 font-mono font-semibold">Hi-Res Lossless</span>
+          </div>
+          <div class="flex flex-wrap gap-1 font-mono text-[9px]">
+            <span class="px-1.5 py-0.5 rounded bg-black/10 dark:bg-slate-800/80">FLAC</span>
+            <span class="px-1.5 py-0.5 rounded bg-black/10 dark:bg-slate-800/80">WAV</span>
+            <span class="px-1.5 py-0.5 rounded bg-black/10 dark:bg-slate-800/80">ALAC</span>
+            <span class="px-1.5 py-0.5 rounded bg-black/10 dark:bg-slate-800/80">DSD</span>
+            <span class="px-1.5 py-0.5 rounded bg-black/10 dark:bg-slate-800/80">AAC</span>
+            <span class="px-1.5 py-0.5 rounded bg-black/10 dark:bg-slate-800/80">OPUS</span>
+          </div>
+        </div>
+      </aside>
+
+      <!-- CONTENT -->
+      <main class="flex-1 rounded-3xl glass p-3 sm:p-5 overflow-y-auto flex flex-col min-h-0 relative">
+
+        <div class="flex items-center gap-2 mb-4 shrink-0">
+          <div class="relative flex-1 max-w-md">
+            <i class="fa-solid fa-magnifying-glass absolute left-3 top-1/2 -translate-y-1/2 text-subtle text-[11px]"></i>
+            <input type="text" id="search-input" placeholder="Buscar título, artista ou álbum..." class="w-full pl-8 pr-3 py-2 rounded-2xl bg-input border text-xs placeholder:text-subtle focus:outline-none focus:border-indigo-500/60 transition-all">
+          </div>
+          <button id="select-mode-btn" class="p-2 rounded-xl glass-card text-muted text-xs hover:opacity-80 transition-all" title="Selecionar músicas">
+            <i class="fa-solid fa-check-double"></i>
+          </button>
+          <button id="demo-btn" class="flex items-center gap-1.5 px-2.5 sm:px-3 py-2 rounded-xl text-[11px] font-semibold dyn-bg text-white shadow-lg dyn-glow hover:brightness-110 active:scale-95 transition-all">
+            <i class="fa-solid fa-wand-magic-sparkles"></i>
+            <span class="hidden sm:inline">Demo Hi-Fi</span>
+          </button>
+        </div>
+
+        <div id="selection-bar" class="hidden mb-3 p-2.5 rounded-2xl glass-card flex items-center justify-between gap-2 animate-fade-in">
+          <span id="selection-count" class="text-xs text-muted font-medium">0 selecionadas</span>
+          <div class="flex items-center gap-1.5">
+            <button id="add-to-playlist-btn" class="px-3 py-1.5 rounded-xl text-[11px] font-semibold bg-emerald-500/20 text-emerald-500 border border-emerald-500/30 active:scale-95 transition-all">
+              <i class="fa-solid fa-plus mr-1"></i>Playlist
+            </button>
+            <button id="cancel-select-btn" class="px-3 py-1.5 rounded-xl text-[11px] font-medium text-muted hover:opacity-80 transition-all">Cancelar</button>
+          </div>
+        </div>
+
+        <!-- TRACKS -->
+        <section id="tab-tracks" class="tab-content flex-1 min-h-0">
+          <div class="flex items-center justify-between pb-2 border-b border-black/5 dark:border-slate-800/70 text-[10px] font-semibold text-subtle px-2 mb-1">
+            <div class="flex items-center gap-3">
+              <span class="w-5 text-center">#</span>
+              <span>MÚSICA</span>
+            </div>
+            <div class="flex items-center gap-6">
+              <span class="hidden sm:inline">ÁLBUM</span>
+              <span>QUALIDADE</span>
+            </div>
+          </div>
+          <div id="tracks-list" class="space-y-1 pb-4"></div>
+        </section>
+
+        <!-- ALBUMS -->
+        <section id="tab-albums" class="tab-content hidden flex-1">
+          <div id="albums-grid" class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-3"></div>
+        </section>
+
+        <!-- ARTISTS -->
+        <section id="tab-artists" class="tab-content hidden flex-1">
+          <div id="artists-grid" class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-3"></div>
+        </section>
+
+        <!-- PLAYLISTS -->
+        <section id="tab-playlists" class="tab-content hidden flex-1 space-y-4">
+          <div class="flex items-center justify-between">
+            <h2 class="text-base font-bold">Playlists</h2>
+            <button id="new-playlist-btn" class="flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-[11px] font-semibold dyn-bg text-white shadow active:scale-95 transition-all">
+              <i class="fa-solid fa-plus"></i> Nova Playlist
+            </button>
+          </div>
+          <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+            <div onclick="showFavorites()" class="p-4 rounded-3xl glass-card cursor-pointer border border-pink-500/20 relative overflow-hidden group">
+              <div class="absolute -right-3 -bottom-3 text-pink-500/10 text-7xl group-hover:scale-110 transition-transform"><i class="fa-solid fa-heart"></i></div>
+              <div class="relative flex items-center gap-3">
+                <div class="w-12 h-12 rounded-2xl bg-gradient-to-br from-pink-500 to-rose-600 flex items-center justify-center text-white text-xl shadow-lg shadow-pink-500/25">
+                  <i class="fa-solid fa-heart"></i>
+                </div>
+                <div>
+                  <h3 class="font-bold text-sm">Favoritas</h3>
+                  <p id="fav-count" class="text-[11px] text-muted">0 faixas</p>
+                </div>
+              </div>
+            </div>
+            <div onclick="loadDemoFilter()" class="p-4 rounded-3xl glass-card cursor-pointer border border-indigo-500/20 relative overflow-hidden group">
+              <div class="absolute -right-3 -bottom-3 text-indigo-500/10 text-7xl group-hover:scale-110 transition-transform"><i class="fa-solid fa-compact-disc"></i></div>
+              <div class="relative flex items-center gap-3">
+                <div class="w-12 h-12 rounded-2xl bg-gradient-to-br from-indigo-500 to-purple-600 flex items-center justify-center text-white text-xl shadow-lg shadow-indigo-500/25">
+                  <i class="fa-solid fa-sliders"></i>
+                </div>
+                <div>
+                  <h3 class="font-bold text-sm">Hi-Fi Synth</h3>
+                  <p class="text-[11px] text-muted">Demos de alta qualidade</p>
+                </div>
+              </div>
+            </div>
+          </div>
+          <div id="playlists-list" class="grid grid-cols-1 sm:grid-cols-2 gap-3"></div>
+        </section>
+
+        <!-- EQUALIZER -->
+        <section id="tab-equalizer" class="tab-content hidden flex-1 space-y-4">
+          <div class="flex items-center justify-between flex-wrap gap-2">
+            <div>
+              <h2 class="text-base font-bold">Equalizador Paramétrico</h2>
+              <p class="text-[11px] text-muted">10 bandas · Spatial Audio · Bass Boost</p>
+            </div>
+            <div class="flex items-center gap-2">
+              <select id="eq-preset" class="px-3 py-1.5 rounded-xl text-[11px] font-medium bg-input border focus:outline-none focus:border-indigo-500">
+                <option value="flat">Flat</option>
+                <option value="bass">Bass Boost</option>
+                <option value="vocal">Vocal</option>
+                <option value="treble">Treble Boost</option>
+                <option value="rock">Rock</option>
+                <option value="electronic">Electronic</option>
+                <option value="jazz">Jazz</option>
+                <option value="classical">Classical</option>
+                <option value="custom" selected>Custom</option>
+              </select>
+              <button id="eq-toggle" class="px-3 py-1.5 rounded-xl text-[11px] font-bold bg-emerald-500/20 text-emerald-500 border border-emerald-500/30 active:scale-95 transition-all">ON</button>
+            </div>
+          </div>
+          <div class="p-3 rounded-3xl glass-card h-32 relative overflow-hidden border border-indigo-500/15">
+            <canvas id="visualizer" class="w-full h-full block"></canvas>
+          </div>
+          <div class="p-4 sm:p-5 rounded-3xl glass-card">
+            <div id="eq-bands" class="flex justify-between gap-1 sm:gap-2"></div>
+            <div class="mt-5 pt-4 border-t border-black/5 dark:border-slate-800 grid grid-cols-1 sm:grid-cols-2 gap-3">
+              <div class="flex items-center justify-between p-3 rounded-2xl bg-black/5 dark:bg-slate-900/50">
+                <div class="flex items-center gap-2.5">
+                  <i class="fa-solid fa-cube text-purple-400"></i>
+                  <div>
+                    <p class="text-xs font-bold">Spatial Audio 3D</p>
+                    <p class="text-[10px] text-muted">Imersão surround</p>
+                  </div>
+                </div>
+                <input type="checkbox" id="spatial-toggle" class="w-5 h-5 accent-indigo-500 cursor-pointer" checked>
+              </div>
+              <div class="flex items-center justify-between p-3 rounded-2xl bg-black/5 dark:bg-slate-900/50">
+                <div class="flex items-center gap-2.5">
+                  <i class="fa-solid fa-drum text-pink-400"></i>
+                  <div>
+                    <p class="text-xs font-bold">Bass Boost</p>
+                    <p class="text-[10px] text-muted">Reforço de graves</p>
+                  </div>
+                </div>
+                <input type="range" id="bass-boost" min="0" max="100" value="35" class="w-24">
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <!-- QUALITY -->
+        <section id="tab-quality" class="tab-content hidden flex-1 space-y-4">
+          <h2 class="text-base font-bold">Qualidade de Áudio Hi-Res</h2>
+          <p class="text-[11px] text-muted -mt-2">Selecione o perfil de reprodução de alta resolução</p>
+          <div class="grid grid-cols-1 sm:grid-cols-2 gap-3" id="quality-options">
+            <label class="quality-option p-4 rounded-3xl glass-card cursor-pointer border-2 border-transparent has-[:checked]:border-amber-500/50 has-[:checked]:bg-amber-500/10 transition-all">
+              <input type="radio" name="quality" value="ldac" class="hidden" checked>
+              <div class="flex items-start gap-3">
+                <div class="w-10 h-10 rounded-xl bg-amber-500/20 flex items-center justify-center text-amber-500 shrink-0"><i class="fa-solid fa-bolt"></i></div>
+                <div>
+                  <h3 class="font-bold text-sm">LDAC / Hi-Res</h3>
+                  <p class="text-[11px] text-muted mt-0.5">Até 96 kHz · 24-bit · 990 kbps</p>
+                  <p class="text-[10px] text-amber-500/80 mt-1 font-mono">Sony LDAC · Bluetooth Hi-Res</p>
+                </div>
+              </div>
+            </label>
+            <label class="quality-option p-4 rounded-3xl glass-card cursor-pointer border-2 border-transparent has-[:checked]:border-cyan-500/50 has-[:checked]:bg-cyan-500/10 transition-all">
+              <input type="radio" name="quality" value="aptx" class="hidden">
+              <div class="flex items-start gap-3">
+                <div class="w-10 h-10 rounded-xl bg-cyan-500/20 flex items-center justify-center text-cyan-500 shrink-0"><i class="fa-solid fa-wave-square"></i></div>
+                <div>
+                  <h3 class="font-bold text-sm">aptX Adaptive / HD</h3>
+                  <p class="text-[11px] text-muted mt-0.5">Até 48 kHz · 24-bit · 420 kbps</p>
+                  <p class="text-[10px] text-cyan-500/80 mt-1 font-mono">Qualcomm · Baixa latência</p>
+                </div>
+              </div>
+            </label>
+            <label class="quality-option p-4 rounded-3xl glass-card cursor-pointer border-2 border-transparent has-[:checked]:border-emerald-500/50 has-[:checked]:bg-emerald-500/10 transition-all">
+              <input type="radio" name="quality" value="flac" class="hidden">
+              <div class="flex items-start gap-3">
+                <div class="w-10 h-10 rounded-xl bg-emerald-500/20 flex items-center justify-center text-emerald-500 shrink-0"><i class="fa-solid fa-compact-disc"></i></div>
+                <div>
+                  <h3 class="font-bold text-sm">FLAC / ALAC Lossless</h3>
+                  <p class="text-[11px] text-muted mt-0.5">Até 192 kHz · 24-bit · Sem perdas</p>
+                  <p class="text-[10px] text-emerald-500/80 mt-1 font-mono">Arquivo local · Bit-perfect</p>
+                </div>
+              </div>
+            </label>
+            <label class="quality-option p-4 rounded-3xl glass-card cursor-pointer border-2 border-transparent has-[:checked]:border-violet-500/50 has-[:checked]:bg-violet-500/10 transition-all">
+              <input type="radio" name="quality" value="dsd" class="hidden">
+              <div class="flex items-start gap-3">
+                <div class="w-10 h-10 rounded-xl bg-violet-500/20 flex items-center justify-center text-violet-500 shrink-0"><i class="fa-solid fa-microchip"></i></div>
+                <div>
+                  <h3 class="font-bold text-sm">DSD / SACD</h3>
+                  <p class="text-[11px] text-muted mt-0.5">DSD64 · DSD128 · 2.8–5.6 MHz</p>
+                  <p class="text-[10px] text-violet-500/80 mt-1 font-mono">Super Audio CD · Ultra Hi-Res</p>
+                </div>
+              </div>
+            </label>
+          </div>
+          <div class="p-4 rounded-3xl glass-card space-y-3">
+            <h3 class="text-xs font-bold">Informações do Stream Atual</h3>
+            <div class="grid grid-cols-2 sm:grid-cols-4 gap-2 text-center">
+              <div class="p-2.5 rounded-xl bg-black/5 dark:bg-slate-900/60">
+                <p class="text-[9px] text-subtle uppercase">Sample Rate</p>
+                <p id="info-sr" class="text-sm font-mono font-bold text-amber-500">96 kHz</p>
+              </div>
+              <div class="p-2.5 rounded-xl bg-black/5 dark:bg-slate-900/60">
+                <p class="text-[9px] text-subtle uppercase">Bit Depth</p>
+                <p id="info-bd" class="text-sm font-mono font-bold text-amber-500">24-bit</p>
+              </div>
+              <div class="p-2.5 rounded-xl bg-black/5 dark:bg-slate-900/60">
+                <p class="text-[9px] text-subtle uppercase">Codec</p>
+                <p id="info-codec" class="text-sm font-mono font-bold text-amber-500">LDAC</p>
+              </div>
+              <div class="p-2.5 rounded-xl bg-black/5 dark:bg-slate-900/60">
+                <p class="text-[9px] text-subtle uppercase">Bitrate</p>
+                <p id="info-br" class="text-sm font-mono font-bold text-amber-500">990 kbps</p>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <!-- SETTINGS -->
+        <section id="tab-settings" class="tab-content hidden flex-1 space-y-4">
+          <h2 class="text-base font-bold mb-1">Configurações</h2>
+
+          <!-- Theme -->
+          <div class="p-4 rounded-2xl glass-card space-y-3">
+            <p class="text-xs font-bold">Aparência</p>
+            <div class="grid grid-cols-2 sm:grid-cols-4 gap-2" id="theme-options">
+              <button data-theme="light" class="theme-opt p-3 rounded-2xl glass-card border-2 border-transparent text-center transition-all">
+                <i class="fa-solid fa-sun text-amber-400 text-lg mb-1"></i>
+                <p class="text-[11px] font-semibold">Claro</p>
+              </button>
+              <button data-theme="dark" class="theme-opt p-3 rounded-2xl glass-card border-2 border-transparent text-center transition-all">
+                <i class="fa-solid fa-moon text-indigo-400 text-lg mb-1"></i>
+                <p class="text-[11px] font-semibold">Escuro</p>
+              </button>
+              <button data-theme="amoled" class="theme-opt p-3 rounded-2xl glass-card border-2 border-transparent text-center transition-all">
+                <i class="fa-solid fa-circle text-slate-300 text-lg mb-1"></i>
+                <p class="text-[11px] font-semibold">AMOLED</p>
+              </button>
+              <button data-theme="system" class="theme-opt p-3 rounded-2xl glass-card border-2 border-transparent text-center transition-all">
+                <i class="fa-solid fa-desktop text-cyan-400 text-lg mb-1"></i>
+                <p class="text-[11px] font-semibold">Sistema</p>
+              </button>
+            </div>
+          </div>
+
+          <div class="p-4 rounded-2xl glass-card flex items-center justify-between">
+            <div>
+              <p class="text-xs font-bold">Media Session (Notificações)</p>
+              <p class="text-[10px] text-muted">Controles na ilha / tela de bloqueio e notificações</p>
+            </div>
+            <span class="px-2.5 py-1 rounded-full text-[10px] font-bold bg-emerald-500/20 text-emerald-500 border border-emerald-500/30">ATIVO</span>
+          </div>
+          <div class="p-4 rounded-2xl glass-card flex items-center justify-between">
+            <div>
+              <p class="text-xs font-bold">Cores dinâmicas da capa</p>
+              <p class="text-[10px] text-muted">Tema do player acompanha a arte do álbum</p>
+            </div>
+            <input type="checkbox" id="dyn-color-toggle" class="w-5 h-5 accent-indigo-500 cursor-pointer" checked>
+          </div>
+          <div class="p-4 rounded-2xl glass-card flex items-center justify-between">
+            <div>
+              <p class="text-xs font-bold">Continuar em segundo plano</p>
+              <p class="text-[10px] text-muted">Áudio e controles permanecem ao minimizar</p>
+            </div>
+            <span class="px-2.5 py-1 rounded-full text-[10px] font-bold bg-emerald-500/20 text-emerald-500 border border-emerald-500/30">SIM</span>
+          </div>
+
+          <!-- Storage permissions status -->
+          <div class="p-4 rounded-2xl glass-card space-y-3">
+            <div class="flex items-center justify-between">
+              <div>
+                <p class="text-xs font-bold">Permissões de armazenamento</p>
+                <p class="text-[10px] text-muted">Acesso a arquivos e pastas do dispositivo</p>
+              </div>
+              <span id="settings-perm-badge" class="px-2.5 py-1 rounded-full text-[10px] font-bold bg-amber-500/20 text-amber-500 border border-amber-500/30">—</span>
+            </div>
+            <div class="space-y-2 text-[11px] text-muted">
+              <div class="flex items-center justify-between py-1.5 border-b border-black/5 dark:border-white/5">
+                <span>Selecionar arquivos</span>
+                <span id="perm-files-status" class="font-mono text-[10px] text-emerald-500">Disponível</span>
+              </div>
+              <div class="flex items-center justify-between py-1.5 border-b border-black/5 dark:border-white/5">
+                <span>Pasta (File System API)</span>
+                <span id="perm-fsapi-status" class="font-mono text-[10px]">—</span>
+              </div>
+              <div class="flex items-center justify-between py-1.5 border-b border-black/5 dark:border-white/5">
+                <span>Pasta (webkitdirectory)</span>
+                <span id="perm-webkit-status" class="font-mono text-[10px]">—</span>
+              </div>
+              <div class="flex items-center justify-between py-1.5">
+                <span>Pasta autorizada salva</span>
+                <span id="perm-saved-status" class="font-mono text-[10px]">Nenhuma</span>
+              </div>
+            </div>
+            <button id="request-storage-btn" class="w-full mt-1 px-3 py-2 rounded-xl text-[11px] font-semibold dyn-bg text-white shadow active:scale-95 transition-all">
+              <i class="fa-solid fa-folder-open mr-1.5"></i> Solicitar acesso a uma pasta
+            </button>
+            <p id="storage-perm-help" class="text-[10px] text-subtle">O navegador pede permissão ao escolher arquivos ou pasta. No iOS, use “Selecionar arquivos”.</p>
+          </div>
+
+          <!-- Import help -->
+          <div class="p-4 rounded-2xl glass-card space-y-2">
+            <p class="text-xs font-bold">Como importar músicas do celular</p>
+            <ul class="text-[11px] text-muted space-y-1.5 list-disc pl-4">
+              <li>Toque em <b class="text-indigo-400">Importar</b> no topo</li>
+              <li><b>Arquivos</b> — escolha várias músicas de qualquer pasta</li>
+              <li><b>Pasta inteira</b> — importa todos os áudios de uma pasta (Chrome/Edge Android)</li>
+              <li>Ou <b>arraste e solte</b> arquivos nesta página</li>
+              <li>Formatos: FLAC, WAV, ALAC, MP3, AAC, OPUS, M4A, DSD…</li>
+            </ul>
+          </div>
+        </section>
+      </main>
+    </div>
+
+    <!-- MINI PLAYER -->
+    <div id="mini-player" class="fixed bottom-14 lg:bottom-3 left-2 right-2 sm:left-5 sm:right-5 max-w-7xl mx-auto rounded-3xl glass p-2 sm:p-2.5 flex items-center justify-between shadow-2xl z-40 cursor-pointer transition-all" onclick="openFullPlayer()">
+      <div class="flex items-center gap-2.5 truncate min-w-0">
+        <div class="relative w-11 h-11 rounded-2xl overflow-hidden shrink-0 shadow-lg ring-1 ring-black/10 dark:ring-white/10">
+          <img id="mini-cover" src="https://placehold.co/100x100/1e1b4b/6366f1?text=Hi-Fi" class="w-full h-full object-cover" alt="">
+        </div>
+        <div class="flex flex-col truncate min-w-0">
+          <span id="mini-title" class="font-bold text-xs sm:text-sm truncate">Selecione uma música</span>
+          <span id="mini-artist" class="text-[10px] sm:text-[11px] text-muted truncate">Minha Música Hi-Fi</span>
+        </div>
+      </div>
+      <div class="flex items-center gap-0.5 sm:gap-1.5 shrink-0" onclick="event.stopPropagation()">
+        <button id="mini-prev" class="p-2.5 rounded-full hover:bg-black/5 dark:hover:bg-white/10 text-muted active:scale-90 transition-all text-sm"><i class="fa-solid fa-backward-step"></i></button>
+        <button id="mini-play" class="w-10 h-10 rounded-full dyn-bg text-white flex items-center justify-center shadow-lg dyn-glow hover:scale-105 active:scale-95 transition-all text-sm"><i class="fa-solid fa-play ml-0.5"></i></button>
+        <button id="mini-next" class="p-2.5 rounded-full hover:bg-black/5 dark:hover:bg-white/10 text-muted active:scale-90 transition-all text-sm"><i class="fa-solid fa-forward-step"></i></button>
+      </div>
+    </div>
+
+    <!-- MOBILE NAV -->
+    <nav class="lg:hidden fixed bottom-0 left-0 right-0 glass border-t z-30 px-1 py-1.5 flex justify-around items-center text-[9px] safe-bottom">
+      <button onclick="switchTab('tracks')" class="nav-btn active flex flex-col items-center gap-0.5 text-indigo-400 py-1 px-2">
+        <i class="fa-solid fa-music text-base"></i><span>Músicas</span>
+      </button>
+      <button onclick="switchTab('albums')" class="nav-btn flex flex-col items-center gap-0.5 text-muted py-1 px-2">
+        <i class="fa-solid fa-compact-disc text-base"></i><span>Álbuns</span>
+      </button>
+      <button onclick="switchTab('playlists')" class="nav-btn flex flex-col items-center gap-0.5 text-muted py-1 px-2">
+        <i class="fa-solid fa-list-ul text-base"></i><span>Playlists</span>
+      </button>
+      <button onclick="switchTab('equalizer')" class="nav-btn flex flex-col items-center gap-0.5 text-muted py-1 px-2">
+        <i class="fa-solid fa-sliders text-base"></i><span>EQ</span>
+      </button>
+      <button onclick="switchTab('settings')" class="nav-btn flex flex-col items-center gap-0.5 text-muted py-1 px-2">
+        <i class="fa-solid fa-gear text-base"></i><span>Ajustes</span>
+      </button>
+    </nav>
+  </div>
+
+  <!-- FULLSCREEN PLAYER -->
+  <div id="full-player" class="fixed inset-0 z-50 flex flex-col justify-between p-5 sm:p-10 transition-transform duration-500 translate-y-full overflow-hidden" style="background: var(--app-bg); opacity: 0.98; backdrop-filter: blur(40px);">
+    <div class="flex items-center justify-between shrink-0">
+      <button onclick="closeFullPlayer()" class="w-10 h-10 rounded-full glass-card flex items-center justify-center text-muted hover:opacity-80 transition-all">
+        <i class="fa-solid fa-chevron-down"></i>
+      </button>
+      <div class="text-center">
+        <p class="text-[9px] font-mono uppercase tracking-[0.2em] text-subtle">Tocando de</p>
+        <p id="full-album" class="text-xs font-bold">Álbum</p>
+      </div>
+      <button id="full-fav" class="w-10 h-10 rounded-full glass-card flex items-center justify-center text-muted hover:text-pink-500 transition-all">
+        <i class="fa-solid fa-heart"></i>
+      </button>
+    </div>
+
+    <div class="my-auto flex flex-col items-center">
+      <div class="relative w-56 h-56 sm:w-72 sm:h-72 md:w-80 md:h-80">
+        <div id="full-glow" class="absolute inset-0 rounded-full blur-3xl opacity-60 transition-all duration-700 dyn-bg"></div>
+        <div id="vinyl" class="relative w-full h-full rounded-full overflow-hidden border-4 border-black/20 dark:border-slate-800 shadow-2xl vinyl-spin vinyl-paused p-1.5" style="background: var(--app-bg);">
+          <img id="full-cover" src="https://placehold.co/400x400/1e1b4b/6366f1?text=Hi-Fi" class="w-full h-full object-cover rounded-full" alt="">
+          <div class="absolute inset-0 m-auto w-11 h-11 sm:w-14 sm:h-14 rounded-full border-4 border-black/20 dark:border-slate-800 flex items-center justify-center" style="background: var(--app-bg);">
+            <div class="w-2.5 h-2.5 rounded-full bg-white/20"></div>
+          </div>
+        </div>
+      </div>
+      <div class="text-center mt-5 space-y-1 max-w-md px-2">
+        <h2 id="full-title" class="text-lg sm:text-xl font-extrabold truncate">Nome da Música</h2>
+        <p id="full-artist" class="text-sm text-muted truncate">Artista</p>
+        <div class="pt-1.5 flex items-center justify-center gap-1.5 text-[9px] font-mono">
+          <span id="full-format" class="px-2 py-0.5 rounded bg-amber-500/10 text-amber-500 border border-amber-500/20">FLAC 24-bit / 96 kHz</span>
+          <span class="px-2 py-0.5 rounded bg-indigo-500/10 text-indigo-400 border border-indigo-500/20">LDAC Ready</span>
+        </div>
+      </div>
+    </div>
+
+    <div class="max-w-md mx-auto w-full space-y-3 shrink-0 mb-2">
+      <div class="space-y-1">
+        <input type="range" id="seek" value="0" min="0" max="100" class="w-full cursor-pointer">
+        <div class="flex justify-between text-[10px] font-mono text-muted">
+          <span id="time-cur">00:00</span>
+          <span id="time-dur">00:00</span>
+        </div>
+      </div>
+      <div class="flex items-center justify-between pt-1">
+        <button id="shuffle-btn" class="text-muted hover:opacity-80 p-2 transition-all text-sm"><i class="fa-solid fa-shuffle"></i></button>
+        <button id="full-prev" class="p-3 active:scale-90 transition-all text-xl"><i class="fa-solid fa-backward-step"></i></button>
+        <button id="full-play" class="w-14 h-14 rounded-full dyn-bg text-white flex items-center justify-center text-xl shadow-2xl dyn-glow hover:scale-105 active:scale-95 transition-all"><i class="fa-solid fa-play ml-0.5"></i></button>
+        <button id="full-next" class="p-3 active:scale-90 transition-all text-xl"><i class="fa-solid fa-forward-step"></i></button>
+        <button id="repeat-btn" class="text-muted hover:opacity-80 p-2 transition-all text-sm"><i class="fa-solid fa-repeat"></i></button>
+      </div>
+      <div class="flex items-center gap-2.5 pt-1 max-w-[220px] mx-auto">
+        <i class="fa-solid fa-volume-low text-[10px] text-subtle"></i>
+        <input type="range" id="volume" min="0" max="1" step="0.01" value="0.85" class="w-full">
+        <i class="fa-solid fa-volume-high text-[10px] text-subtle"></i>
+      </div>
+    </div>
+  </div>
+
+  <!-- IMPORT MODAL -->
+  <div id="import-modal" class="fixed inset-0 z-[60] hidden items-center justify-center p-4 modal-backdrop">
+    <div class="w-full max-w-sm rounded-3xl glass p-5 space-y-4 animate-fade-in">
+      <div class="flex items-center justify-between">
+        <h3 class="text-base font-bold">Importar músicas</h3>
+        <button id="import-close" class="w-8 h-8 rounded-full glass-card flex items-center justify-center text-muted"><i class="fa-solid fa-xmark"></i></button>
+      </div>
+      <p class="text-[11px] text-muted">Escolha como deseja adicionar áudios do seu celular ou computador.</p>
+
+      <!-- Storage permission status -->
+      <div id="storage-perm-banner" class="p-3 rounded-2xl bg-black/5 dark:bg-slate-900/50 border border-black/5 dark:border-white/5 flex items-start gap-2.5">
+        <i id="storage-perm-icon" class="fa-solid fa-shield-halved text-amber-500 mt-0.5 shrink-0"></i>
+        <div class="min-w-0">
+          <p id="storage-perm-title" class="text-[11px] font-bold">Verificando permissões…</p>
+          <p id="storage-perm-desc" class="text-[10px] text-muted mt-0.5">Acesso ao armazenamento do dispositivo</p>
+        </div>
+      </div>
+
+      <button id="import-files-btn" class="w-full flex items-center gap-3 p-4 rounded-2xl glass-card border border-indigo-500/20 active:scale-[0.98] transition-all text-left">
+        <div class="w-11 h-11 rounded-xl bg-indigo-500/20 flex items-center justify-center text-indigo-400 shrink-0">
+          <i class="fa-solid fa-file-audio text-lg"></i>
+        </div>
+        <div>
+          <p class="text-sm font-bold">Selecionar arquivos</p>
+          <p class="text-[10px] text-muted">Várias músicas de qualquer pasta</p>
+        </div>
+      </button>
+
+      <button id="import-folder-btn" class="w-full flex items-center gap-3 p-4 rounded-2xl glass-card border border-emerald-500/20 active:scale-[0.98] transition-all text-left">
+        <div class="w-11 h-11 rounded-xl bg-emerald-500/20 flex items-center justify-center text-emerald-400 shrink-0">
+          <i class="fa-solid fa-folder-open text-lg"></i>
+        </div>
+        <div class="min-w-0 flex-1">
+          <p class="text-sm font-bold">Importar pasta inteira</p>
+          <p class="text-[10px] text-muted">Todos os áudios de uma pasta (recomendado no celular)</p>
+          <p id="folder-perm-hint" class="text-[9px] text-subtle mt-0.5 hidden"></p>
+        </div>
+      </button>
+
+      <div id="drop-zone" class="p-5 rounded-2xl border-2 border-dashed border-black/10 dark:border-white/10 text-center transition-all">
+        <i class="fa-solid fa-cloud-arrow-up text-2xl text-subtle mb-2"></i>
+        <p class="text-xs font-medium">Ou arraste arquivos aqui</p>
+        <p class="text-[10px] text-muted mt-0.5">FLAC, WAV, MP3, AAC, OPUS…</p>
+      </div>
+
+      <p class="text-[10px] text-subtle text-center">No iPhone/iPad use “Selecionar arquivos”. No Android Chrome, “Importar pasta” funciona melhor.</p>
+    </div>
+  </div>
+
+  <!-- PLAYLIST MODAL -->
+  <div id="playlist-modal" class="fixed inset-0 z-[60] hidden items-center justify-center p-4 modal-backdrop">
+    <div class="w-full max-w-sm rounded-3xl glass p-5 space-y-4 animate-fade-in">
+      <h3 class="text-base font-bold">Nova Playlist</h3>
+      <input type="text" id="playlist-name-input" placeholder="Nome da playlist..." class="w-full px-4 py-2.5 rounded-2xl bg-input border text-sm placeholder:text-subtle focus:outline-none focus:border-indigo-500">
+      <p class="text-[11px] text-muted" id="playlist-modal-hint">As músicas selecionadas serão adicionadas.</p>
+      <div class="flex gap-2 justify-end">
+        <button id="playlist-cancel" class="px-4 py-2 rounded-xl text-xs font-medium text-muted hover:opacity-80 transition-all">Cancelar</button>
+        <button id="playlist-create" class="px-4 py-2 rounded-xl text-xs font-semibold dyn-bg text-white shadow active:scale-95 transition-all">Criar</button>
+      </div>
+    </div>
+  </div>
+
+  <div id="toasts" class="fixed top-4 right-4 z-[70] flex flex-col gap-2 pointer-events-none max-w-xs"></div>
+  <audio id="audio" crossorigin="anonymous" class="hidden" playsinline></audio>
+
+  <script>
+  // ═══════════════════════════════════════════════════════════
+  // THEME SYSTEM
+  // ═══════════════════════════════════════════════════════════
+  const THEME_KEY = 'hifi_theme';
+  let currentThemePref = localStorage.getItem(THEME_KEY) || 'system';
+
+  function resolveTheme(pref) {
+    if (pref === 'system') {
+      return window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
+    }
+    return pref;
+  }
+
+  function applyTheme(pref) {
+    currentThemePref = pref;
+    localStorage.setItem(THEME_KEY, pref);
+    const resolved = resolveTheme(pref);
+    const html = document.documentElement;
+    html.classList.remove('light', 'dark', 'amoled');
+    if (resolved === 'light') html.classList.add('light');
+    else if (resolved === 'amoled') html.classList.add('amoled');
+    else html.classList.add('dark');
+
+    // meta theme-color
+    const meta = document.getElementById('meta-theme-color');
+    if (resolved === 'light') meta.content = '#f1f5f9';
+    else if (resolved === 'amoled') meta.content = '#000000';
+    else meta.content = '#020617';
+
+    // highlight selected option
+    document.querySelectorAll('.theme-opt').forEach(btn => {
+      btn.classList.toggle('selected', btn.dataset.theme === pref);
+    });
+  }
+
+  // System preference change
+  window.matchMedia('(prefers-color-scheme: dark)').addEventListener('change', () => {
+    if (currentThemePref === 'system') applyTheme('system');
+  });
+
+  // ═══════════════════════════════════════════════════════════
+  // STATE
+  // ═══════════════════════════════════════════════════════════
+  let tracks = [];
+  let playlists = JSON.parse(localStorage.getItem('hifi_playlists') || '[]');
+  let favorites = new Set(JSON.parse(localStorage.getItem('hifi_favs') || '[]'));
+  let currentIndex = -1;
+  let isPlaying = false;
+  let isShuffle = false;
+  let repeatMode = 0;
+  let selectMode = false;
+  let selectedIds = new Set();
+  let currentQuality = 'ldac';
+
+  let audioCtx = null, sourceNode = null, eqFilters = [], bassNode = null, pannerNode = null, analyser = null;
+  let eqEnabled = true;
+  const EQ_FREQS = [32, 64, 125, 250, 500, 1000, 2000, 4000, 8000, 16000];
+  const EQ_LABELS = ['32','64','125','250','500','1k','2k','4k','8k','16k'];
+  const PRESETS = {
+    flat:       [0,0,0,0,0,0,0,0,0,0],
+    bass:       [6,5,4,2,0,-1,-2,-2,-1,0],
+    vocal:      [-2,-1,0,2,4,4,2,0,-1,-2],
+    treble:     [-2,-1,0,0,1,2,4,5,6,5],
+    rock:       [4,3,1,0,-1,0,2,3,3,2],
+    electronic: [5,4,1,0,-2,0,1,3,4,4],
+    jazz:       [2,1,0,1,2,1,0,1,2,1],
+    classical:  [0,0,0,0,0,0,1,2,3,2]
+  };
+
+  const audio = document.getElementById('audio');
+  const vinyl = document.getElementById('vinyl');
+
+  // ═══════════════════════════════════════════════════════════
+  // EQ UI
+  // ═══════════════════════════════════════════════════════════
+  function buildEqUI() {
+    const container = document.getElementById('eq-bands');
+    container.innerHTML = EQ_FREQS.map((f, i) => `
+      <div class="flex flex-col items-center gap-1.5 flex-1 min-w-[28px]">
+        <span class="text-[9px] font-mono text-subtle">${EQ_LABELS[i]}</span>
+        <input type="range" id="eq-${i}" min="-12" max="12" value="0" step="0.5" class="eq-slider">
+        <span id="eqv-${i}" class="text-[9px] font-mono text-indigo-400 font-semibold">0</span>
+      </div>
+    `).join('');
+    EQ_FREQS.forEach((_, i) => {
+      const sl = document.getElementById(`eq-${i}`);
+      sl.addEventListener('input', e => {
+        const v = parseFloat(e.target.value);
+        document.getElementById(`eqv-${i}`).textContent = (v > 0 ? '+' : '') + v;
+        if (eqFilters[i]) eqFilters[i].gain.value = v;
+        document.getElementById('eq-preset').value = 'custom';
+      });
+    });
+  }
+  buildEqUI();
+
+  function initAudio() {
+    if (audioCtx) return;
+    audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+    sourceNode = audioCtx.createMediaElementSource(audio);
+    eqFilters = EQ_FREQS.map((f, i) => {
+      const filt = audioCtx.createBiquadFilter();
+      if (i === 0) filt.type = 'lowshelf';
+      else if (i === EQ_FREQS.length - 1) filt.type = 'highshelf';
+      else filt.type = 'peaking';
+      filt.frequency.value = f;
+      filt.Q.value = 1.0;
+      filt.gain.value = parseFloat(document.getElementById(`eq-${i}`)?.value || 0);
+      return filt;
+    });
+    bassNode = audioCtx.createGain();
+    bassNode.gain.value = 1 + (parseFloat(document.getElementById('bass-boost').value) / 100) * 0.8;
+    pannerNode = audioCtx.createStereoPanner ? audioCtx.createStereoPanner() : null;
+    if (pannerNode) pannerNode.pan.value = 0.15;
+    analyser = audioCtx.createAnalyser();
+    analyser.fftSize = 128;
+    let prev = sourceNode;
+    eqFilters.forEach(f => { prev.connect(f); prev = f; });
+    prev.connect(bassNode);
+    let last = bassNode;
+    if (pannerNode) { last.connect(pannerNode); last = pannerNode; }
+    last.connect(analyser);
+    analyser.connect(audioCtx.destination);
+    startVisualizer();
+  }
+
+  function applyPreset(name) {
+    const gains = PRESETS[name] || PRESETS.flat;
+    gains.forEach((g, i) => {
+      const sl = document.getElementById(`eq-${i}`);
+      if (sl) {
+        sl.value = g;
+        document.getElementById(`eqv-${i}`).textContent = (g > 0 ? '+' : '') + g;
+        if (eqFilters[i]) eqFilters[i].gain.value = eqEnabled ? g : 0;
+      }
+    });
+  }
+
+  document.getElementById('eq-preset').addEventListener('change', e => {
+    if (e.target.value !== 'custom') applyPreset(e.target.value);
+  });
+  document.getElementById('eq-toggle').addEventListener('click', () => {
+    eqEnabled = !eqEnabled;
+    const btn = document.getElementById('eq-toggle');
+    btn.textContent = eqEnabled ? 'ON' : 'OFF';
+    btn.className = eqEnabled
+      ? 'px-3 py-1.5 rounded-xl text-[11px] font-bold bg-emerald-500/20 text-emerald-500 border border-emerald-500/30 active:scale-95 transition-all'
+      : 'px-3 py-1.5 rounded-xl text-[11px] font-bold bg-black/10 dark:bg-slate-700/40 text-muted border border-black/10 dark:border-slate-600/30 active:scale-95 transition-all';
+    eqFilters.forEach((f, i) => {
+      f.gain.value = eqEnabled ? parseFloat(document.getElementById(`eq-${i}`).value) : 0;
+    });
+  });
+  document.getElementById('bass-boost').addEventListener('input', e => {
+    if (bassNode) bassNode.gain.value = 1 + (parseFloat(e.target.value) / 100) * 0.8;
+  });
+  document.getElementById('spatial-toggle').addEventListener('change', e => {
+    if (pannerNode) pannerNode.pan.value = e.target.checked ? 0.15 : 0;
+  });
+
+  function startVisualizer() {
+    const canvas = document.getElementById('visualizer');
+    const ctx = canvas.getContext('2d');
+    function resize() {
+      canvas.width = canvas.parentElement.clientWidth;
+      canvas.height = canvas.parentElement.clientHeight;
+    }
+    resize();
+    window.addEventListener('resize', resize);
+    function draw() {
+      requestAnimationFrame(draw);
+      if (!analyser) return;
+      const buf = analyser.frequencyBinCount;
+      const data = new Uint8Array(buf);
+      analyser.getByteFrequencyData(data);
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
+      const barW = (canvas.width / buf) * 2.4;
+      let x = 0;
+      for (let i = 0; i < buf; i++) {
+        const h = (data[i] / 255) * canvas.height;
+        const grad = ctx.createLinearGradient(0, canvas.height, 0, 0);
+        grad.addColorStop(0, `rgba(var(--dynamic-accent), 0.15)`);
+        grad.addColorStop(0.5, `rgba(168, 85, 247, 0.75)`);
+        grad.addColorStop(1, `rgba(236, 72, 153, 0.95)`);
+        ctx.fillStyle = grad;
+        ctx.fillRect(x, canvas.height - h, barW - 1.5, h);
+        x += barW;
+      }
+    }
+    draw();
+  }
+
+  function extractColor(imgEl) {
+    if (!document.getElementById('dyn-color-toggle').checked) return;
+    const c = document.createElement('canvas');
+    const cx = c.getContext('2d');
+    c.width = 24; c.height = 24;
+    try {
+      cx.drawImage(imgEl, 0, 0, 24, 24);
+      const d = cx.getImageData(0, 0, 24, 24).data;
+      let r = 0, g = 0, b = 0, n = 0;
+      for (let i = 0; i < d.length; i += 4) {
+        const R = d[i], G = d[i+1], B = d[i+2];
+        const mx = Math.max(R,G,B), mn = Math.min(R,G,B);
+        if (mx - mn > 20 && mx < 245 && mn > 15) { r += R; g += G; b += B; n++; }
+      }
+      if (n === 0) { r = 99; g = 102; b = 241; }
+      else { r = Math.round(r/n); g = Math.round(g/n); b = Math.round(b/n); }
+      document.documentElement.style.setProperty('--dynamic-accent', `${r}, ${g}, ${b}`);
+      document.documentElement.style.setProperty('--dynamic-bg-glow', `rgba(${r},${g},${b},0.32)`);
+      document.documentElement.style.setProperty('--dynamic-soft', `rgba(${r},${g},${b},0.14)`);
+    } catch (_) {}
+  }
+
+  function updateMediaSession(track) {
+    if (!('mediaSession' in navigator)) return;
+    navigator.mediaSession.metadata = new MediaMetadata({
+      title: track.title,
+      artist: track.artist,
+      album: track.album,
+      artwork: [
+        { src: track.cover, sizes: '96x96', type: 'image/png' },
+        { src: track.cover, sizes: '256x256', type: 'image/png' },
+        { src: track.cover, sizes: '512x512', type: 'image/png' }
+      ]
+    });
+    navigator.mediaSession.setActionHandler('play', () => play());
+    navigator.mediaSession.setActionHandler('pause', () => pause());
+    navigator.mediaSession.setActionHandler('previoustrack', () => prevTrack());
+    navigator.mediaSession.setActionHandler('nexttrack', () => nextTrack());
+    navigator.mediaSession.setActionHandler('seekto', d => { if (d.seekTime != null) audio.currentTime = d.seekTime; });
+    navigator.mediaSession.setActionHandler('seekbackward', d => { audio.currentTime = Math.max(0, audio.currentTime - (d.seekOffset || 10)); });
+    navigator.mediaSession.setActionHandler('seekforward', d => { audio.currentTime = Math.min(audio.duration || 0, audio.currentTime + (d.seekOffset || 10)); });
+  }
+
+  document.addEventListener('visibilitychange', () => {
+    if (document.hidden && isPlaying && audioCtx?.state === 'suspended') audioCtx.resume();
+  });
+
+  // ═══════════════════════════════════════════════════════════
+  // DEMO
+  // ═══════════════════════════════════════════════════════════
+  async function generateDemos() {
+    toast('Gerando demos Hi-Fi sintéticos...', 'info');
+    const demos = [
+      { title: 'Sintonia Estelar Lossless', artist: 'Aurora Soundlabs', album: 'Cosmic Frequencies', freq: 440 },
+      { title: 'Onda Neobrutalista 96kHz', artist: 'LDAC Engine', album: 'Hi-Res Demos', freq: 523.25 },
+      { title: 'Bateria Cyberpunk 32-Bit', artist: 'Pulse Synth', album: 'Digital Dreams', freq: 329.63 },
+      { title: 'Resonância Espacial 3D', artist: 'Acoustics Lab', album: 'Cosmic Frequencies', freq: 659.25 },
+      { title: 'Noite em Kyoto Hi-Res', artist: 'Sakura Audio', album: 'Tokyo Nights', freq: 392 },
+      { title: 'Circuito Analógico', artist: 'Voltage Labs', album: 'Hi-Res Demos', freq: 277.18 }
+    ];
+    for (let i = 0; i < demos.length; i++) {
+      const d = demos[i];
+      const sr = 44100, dur = 18;
+      const off = new OfflineAudioContext(2, sr * dur, sr);
+      const osc = off.createOscillator();
+      const sub = off.createOscillator();
+      const gain = off.createGain();
+      const filter = off.createBiquadFilter();
+      filter.type = 'lowpass';
+      filter.frequency.setValueAtTime(800, 0);
+      filter.frequency.exponentialRampToValueAtTime(4000, dur / 2);
+      filter.frequency.exponentialRampToValueAtTime(1200, dur);
+      osc.type = i % 2 === 0 ? 'sine' : 'triangle';
+      osc.frequency.setValueAtTime(d.freq, 0);
+      osc.frequency.exponentialRampToValueAtTime(d.freq * 1.4, dur / 2);
+      osc.frequency.exponentialRampToValueAtTime(d.freq, dur);
+      sub.type = 'sine';
+      sub.frequency.value = d.freq / 2;
+      gain.gain.setValueAtTime(0.001, 0);
+      gain.gain.exponentialRampToValueAtTime(0.28, 0.6);
+      gain.gain.exponentialRampToValueAtTime(0.001, dur);
+      osc.connect(filter); sub.connect(filter); filter.connect(gain); gain.connect(off.destination);
+      osc.start(0); sub.start(0);
+      const buf = await off.startRendering();
+      const blob = bufferToWav(buf);
+      const url = URL.createObjectURL(blob);
+      const cover = synthCover(d.title, i);
+      tracks.push({
+        id: 'demo-' + Date.now() + '-' + i,
+        title: d.title, artist: d.artist, album: d.album,
+        duration: dur, url, cover,
+        bitrate: '24-bit / 96 kHz FLAC', format: 'FLAC'
+      });
+    }
+    renderAll();
+    toast(`${demos.length} demos Hi-Fi carregados!`, 'success');
+    if (currentIndex === -1) loadTrack(0);
+  }
+
+  function bufferToWav(buffer) {
+    const nCh = buffer.numberOfChannels, len = buffer.length * nCh * 2 + 44;
+    const out = new DataView(new ArrayBuffer(len));
+    let pos = 0;
+    const u16 = d => { out.setUint16(pos, d, true); pos += 2; };
+    const u32 = d => { out.setUint32(pos, d, true); pos += 4; };
+    u32(0x46464952); u32(len - 8); u32(0x45564157);
+    u32(0x20746d66); u32(16); u16(1); u16(nCh);
+    u32(buffer.sampleRate); u32(buffer.sampleRate * 2 * nCh); u16(nCh * 2); u16(16);
+    u32(0x61746164); u32(len - pos - 4);
+    const chs = [];
+    for (let i = 0; i < nCh; i++) chs.push(buffer.getChannelData(i));
+    let off = 0;
+    while (off < buffer.length) {
+      for (let i = 0; i < nCh; i++) {
+        let s = Math.max(-1, Math.min(1, chs[i][off]));
+        s = (0.5 + s < 0 ? s * 32768 : s * 32767) | 0;
+        out.setInt16(pos, s, true); pos += 2;
+      }
+      off++;
+    }
+    return new Blob([out.buffer], { type: 'audio/wav' });
+  }
+
+  function synthCover(text, idx) {
+    const c = document.createElement('canvas');
+    c.width = 400; c.height = 400;
+    const cx = c.getContext('2d');
+    const pals = [
+      ['#4f46e5','#a855f7'], ['#ec4899','#f43f5e'],
+      ['#06b6d4','#3b82f6'], ['#10b981','#059669'],
+      ['#f59e0b','#ef4444'], ['#8b5cf6','#ec4899']
+    ];
+    const p = pals[idx % pals.length];
+    const g = cx.createLinearGradient(0, 0, 400, 400);
+    g.addColorStop(0, p[0]); g.addColorStop(1, p[1]);
+    cx.fillStyle = g; cx.fillRect(0, 0, 400, 400);
+    cx.strokeStyle = 'rgba(255,255,255,0.12)';
+    cx.lineWidth = 12;
+    cx.beginPath(); cx.arc(200, 200, 130, 0, Math.PI * 2); cx.stroke();
+    cx.beginPath(); cx.arc(200, 200, 90, 0, Math.PI * 2); cx.stroke();
+    cx.fillStyle = '#fff';
+    cx.font = 'bold 22px Inter,sans-serif';
+    cx.textAlign = 'center';
+    cx.fillText(text.substring(0, 18), 200, 195);
+    cx.font = '11px JetBrains Mono,monospace';
+    cx.fillStyle = 'rgba(255,255,255,0.65)';
+    cx.fillText('HI-RES AUDIO', 200, 225);
+    return c.toDataURL('image/png');
+  }
+
+  // ═══════════════════════════════════════════════════════════
+  // IMPORT + STORAGE PERMISSION VALIDATION
+  // ═══════════════════════════════════════════════════════════
+  const importModal = document.getElementById('import-modal');
+  const fileInput = document.getElementById('file-input');
+  const folderInput = document.getElementById('folder-input');
+
+  const CAPS = {
+    fileInput: true, // always available in modern browsers
+    fsApi: typeof window.showDirectoryPicker === 'function',
+    webkitDir: 'webkitdirectory' in document.createElement('input'),
+    secureContext: window.isSecureContext === true
+  };
+
+  let savedDirHandle = null; // in-memory; optionally persist via IndexedDB later
+
+  function isAudioFile(f) {
+    return f && (f.type.startsWith('audio/') ||
+      /\.(flac|wav|mp3|m4a|aac|ogg|opus|webm|aiff|aif|dsd|dsf|alac)$/i.test(f.name || ''));
+  }
+
+  /** Query permission on a FileSystemHandle (directory or file). */
+  async function queryHandlePermission(handle, mode = 'read') {
+    if (!handle || typeof handle.queryPermission !== 'function') return 'prompt';
+    try {
+      return await handle.queryPermission({ mode });
+    } catch (_) {
+      return 'prompt';
+    }
+  }
+
+  /** Request permission on a handle; returns true if granted. */
+  async function requestHandlePermission(handle, mode = 'read') {
+    if (!handle) return false;
+    try {
+      const current = await queryHandlePermission(handle, mode);
+      if (current === 'granted') return true;
+      if (typeof handle.requestPermission !== 'function') return current === 'granted';
+      const result = await handle.requestPermission({ mode });
+      return result === 'granted';
+    } catch (err) {
+      console.warn('requestPermission failed:', err);
+      return false;
+    }
+  }
+
+  /** Detect capabilities and update UI badges. */
+  function refreshPermissionUI() {
+    const fsEl = document.getElementById('perm-fsapi-status');
+    const wkEl = document.getElementById('perm-webkit-status');
+    const filesEl = document.getElementById('perm-files-status');
+    const savedEl = document.getElementById('perm-saved-status');
+    const badge = document.getElementById('settings-perm-badge');
+    const bannerIcon = document.getElementById('storage-perm-icon');
+    const bannerTitle = document.getElementById('storage-perm-title');
+    const bannerDesc = document.getElementById('storage-perm-desc');
+    const folderHint = document.getElementById('folder-perm-hint');
+    const help = document.getElementById('storage-perm-help');
+
+    if (filesEl) {
+      filesEl.textContent = 'Disponível';
+      filesEl.className = 'font-mono text-[10px] text-emerald-500';
+    }
+
+    if (fsEl) {
+      if (!CAPS.secureContext) {
+        fsEl.textContent = 'Requer HTTPS';
+        fsEl.className = 'font-mono text-[10px] text-amber-500';
+      } else if (CAPS.fsApi) {
+        fsEl.textContent = 'Disponível';
+        fsEl.className = 'font-mono text-[10px] text-emerald-500';
+      } else {
+        fsEl.textContent = 'Não suportado';
+        fsEl.className = 'font-mono text-[10px] text-rose-400';
+      }
+    }
+
+    if (wkEl) {
+      if (CAPS.webkitDir) {
+        wkEl.textContent = 'Disponível';
+        wkEl.className = 'font-mono text-[10px] text-emerald-500';
+      } else {
+        wkEl.textContent = 'Não suportado';
+        wkEl.className = 'font-mono text-[10px] text-rose-400';
+      }
+    }
+
+    if (savedEl) {
+      if (savedDirHandle) {
+        savedEl.textContent = savedDirHandle.name || 'Pasta autorizada';
+        savedEl.className = 'font-mono text-[10px] text-emerald-500';
+      } else {
+        savedEl.textContent = 'Nenhuma';
+        savedEl.className = 'font-mono text-[10px] text-muted';
+      }
+    }
+
+    const folderOk = (CAPS.fsApi && CAPS.secureContext) || CAPS.webkitDir;
+    const overallOk = CAPS.fileInput;
+
+    if (badge) {
+      if (overallOk && folderOk) {
+        badge.textContent = 'OK';
+        badge.className = 'px-2.5 py-1 rounded-full text-[10px] font-bold bg-emerald-500/20 text-emerald-500 border border-emerald-500/30';
+      } else if (overallOk) {
+        badge.textContent = 'PARCIAL';
+        badge.className = 'px-2.5 py-1 rounded-full text-[10px] font-bold bg-amber-500/20 text-amber-500 border border-amber-500/30';
+      } else {
+        badge.textContent = 'BLOQUEADO';
+        badge.className = 'px-2.5 py-1 rounded-full text-[10px] font-bold bg-rose-500/20 text-rose-400 border border-rose-500/30';
+      }
+    }
+
+    if (bannerIcon && bannerTitle && bannerDesc) {
+      if (!CAPS.secureContext && CAPS.fsApi === false) {
+        bannerIcon.className = 'fa-solid fa-shield-halved text-amber-500 mt-0.5 shrink-0';
+        bannerTitle.textContent = 'Contexto não seguro';
+        bannerDesc.textContent = 'Abra o app via HTTPS ou localhost para acesso completo a pastas.';
+      } else if (folderOk) {
+        bannerIcon.className = 'fa-solid fa-shield-halved text-emerald-500 mt-0.5 shrink-0';
+        bannerTitle.textContent = 'Permissões de armazenamento OK';
+        bannerDesc.textContent = CAPS.fsApi
+          ? 'Este navegador permite escolher arquivos e pastas. A permissão é pedida ao importar.'
+          : 'Seleção de arquivos e pastas (webkitdirectory) disponível.';
+      } else {
+        bannerIcon.className = 'fa-solid fa-shield-halved text-amber-500 mt-0.5 shrink-0';
+        bannerTitle.textContent = 'Acesso a pasta limitado';
+        bannerDesc.textContent = 'Use “Selecionar arquivos”. Importar pasta inteira não está disponível neste navegador.';
+      }
+    }
+
+    if (folderHint) {
+      if (!folderOk) {
+        folderHint.classList.remove('hidden');
+        folderHint.textContent = CAPS.secureContext
+          ? 'Não suportado neste navegador — use “Selecionar arquivos”.'
+          : 'Requer HTTPS. Use “Selecionar arquivos” ou abra via HTTPS.';
+      } else {
+        folderHint.classList.add('hidden');
+        folderHint.textContent = '';
+      }
+    }
+
+    if (help) {
+      if (!CAPS.secureContext) {
+        help.textContent = 'File System Access API exige HTTPS (ou localhost). Em HTTP só a seleção de arquivos funciona.';
+      } else if (CAPS.fsApi) {
+        help.textContent = 'Ao escolher uma pasta, o navegador solicita permissão de leitura. Você pode negar ou permitir.';
+      } else {
+        help.textContent = 'Neste navegador use “Selecionar arquivos”. No iOS Safari a seleção de pasta completa não está disponível.';
+      }
+    }
+
+    // Disable folder button visually if nothing works
+    const folderBtn = document.getElementById('import-folder-btn');
+    if (folderBtn) {
+      if (!folderOk) {
+        folderBtn.classList.add('opacity-60');
+        folderBtn.title = 'Acesso a pasta não disponível neste navegador';
+      } else {
+        folderBtn.classList.remove('opacity-60');
+        folderBtn.title = '';
+      }
+    }
+  }
+
+  /** Walk a directory handle and collect audio File objects. */
+  async function collectAudioFromDir(dirHandle) {
+    const files = [];
+    async function walk(handle) {
+      for await (const entry of handle.values()) {
+        try {
+          if (entry.kind === 'file') {
+            const f = await entry.getFile();
+            if (isAudioFile(f)) files.push(f);
+          } else if (entry.kind === 'directory') {
+            // Nested dirs: ensure we still have permission
+            const ok = await requestHandlePermission(entry, 'read');
+            if (ok) await walk(entry);
+          }
+        } catch (err) {
+          // Skip entries we cannot read (permission denied / NotAllowedError)
+          console.warn('Skip entry:', entry?.name, err?.name || err);
+        }
+      }
+    }
+    await walk(dirHandle);
+    return files;
+  }
+
+  async function importFromDirectoryHandle(dirHandle) {
+    const perm = await requestHandlePermission(dirHandle, 'read');
+    if (!perm) {
+      toast('Permissão de leitura da pasta negada. Autorize o acesso e tente de novo.', 'error');
+      refreshPermissionUI();
+      return;
+    }
+    savedDirHandle = dirHandle;
+    closeImportModal();
+    toast('Escaneando pasta (com permissão concedida)…', 'info');
+    try {
+      const files = await collectAudioFromDir(dirHandle);
+      processFiles(files);
+    } catch (err) {
+      console.error(err);
+      if (err.name === 'NotAllowedError' || err.name === 'SecurityError') {
+        toast('Acesso à pasta bloqueado pelo navegador. Verifique as permissões.', 'error');
+      } else {
+        toast('Erro ao ler a pasta: ' + (err.message || err.name), 'error');
+      }
+    }
+    refreshPermissionUI();
+  }
+
+  function openImportModal() {
+    refreshPermissionUI();
+    importModal.classList.remove('hidden');
+    importModal.classList.add('flex');
+  }
+  function closeImportModal() {
+    importModal.classList.add('hidden');
+    importModal.classList.remove('flex');
+  }
+
+  document.getElementById('import-btn').addEventListener('click', openImportModal);
+  document.getElementById('import-close').addEventListener('click', closeImportModal);
+
+  // Select multiple files (works everywhere, including iOS)
+  document.getElementById('import-files-btn').addEventListener('click', () => {
+    try {
+      fileInput.click();
+    } catch (err) {
+      toast('Não foi possível abrir o seletor de arquivos. Verifique as permissões do navegador.', 'error');
+    }
+  });
+
+  // Folder import with full permission validation
+  document.getElementById('import-folder-btn').addEventListener('click', async () => {
+    // Prefer File System Access API
+    if (CAPS.fsApi && CAPS.secureContext) {
+      try {
+        // If we already have a saved handle, try reusing it
+        if (savedDirHandle) {
+          const stillGranted = await requestHandlePermission(savedDirHandle, 'read');
+          if (stillGranted) {
+            await importFromDirectoryHandle(savedDirHandle);
+            return;
+          }
+          savedDirHandle = null;
+        }
+
+        const dirHandle = await window.showDirectoryPicker({ mode: 'read' });
+        // User picked a folder → request explicit permission (some browsers grant on pick)
+        await importFromDirectoryHandle(dirHandle);
+        return;
+      } catch (err) {
+        if (err.name === 'AbortError') {
+          // User cancelled picker — not an error
+          return;
+        }
+        if (err.name === 'NotAllowedError' || err.name === 'SecurityError') {
+          toast('Permissão de armazenamento negada. Autorize o acesso nas configurações do navegador.', 'error');
+          refreshPermissionUI();
+          return;
+        }
+        console.warn('showDirectoryPicker error, falling back:', err);
+        // fall through to webkitdirectory
+      }
+    }
+
+    if (CAPS.webkitDir) {
+      try {
+        folderInput.click();
+      } catch (err) {
+        toast('Não foi possível abrir o seletor de pasta.', 'error');
+      }
+      return;
+    }
+
+    toast('Importar pasta não é suportado neste navegador. Use “Selecionar arquivos”.', 'error');
+    refreshPermissionUI();
+  });
+
+  // Settings: request storage access button
+  document.getElementById('request-storage-btn')?.addEventListener('click', async () => {
+    if (CAPS.fsApi && CAPS.secureContext) {
+      try {
+        const dirHandle = await window.showDirectoryPicker({ mode: 'read' });
+        const granted = await requestHandlePermission(dirHandle, 'read');
+        if (granted) {
+          savedDirHandle = dirHandle;
+          toast('Permissão de pasta concedida: ' + (dirHandle.name || 'pasta'), 'success');
+          // Optionally import immediately
+          const files = await collectAudioFromDir(dirHandle);
+          if (files.length) processFiles(files);
+          else toast('Pasta autorizada, mas nenhum áudio encontrado.', 'info');
+        } else {
+          toast('Permissão negada pelo usuário ou pelo sistema.', 'error');
+        }
+      } catch (err) {
+        if (err.name === 'AbortError') return;
+        if (err.name === 'NotAllowedError' || err.name === 'SecurityError') {
+          toast('Acesso bloqueado. Verifique as permissões do site nas configurações do navegador.', 'error');
+        } else {
+          toast('Erro: ' + (err.message || err.name), 'error');
+        }
+      }
+      refreshPermissionUI();
+      return;
+    }
+    if (CAPS.webkitDir) {
+      folderInput.click();
+      return;
+    }
+    fileInput.click();
+  });
+
+  fileInput.addEventListener('change', e => {
+    const files = Array.from(e.target.files || []).filter(isAudioFile);
+    closeImportModal();
+    if (!files.length && (e.target.files || []).length) {
+      toast('Os arquivos escolhidos não são de áudio suportado.', 'error');
+    } else {
+      processFiles(files);
+    }
+    e.target.value = '';
+    refreshPermissionUI();
+  });
+
+  folderInput.addEventListener('change', e => {
+    const files = Array.from(e.target.files || []).filter(isAudioFile);
+    closeImportModal();
+    if (!files.length && (e.target.files || []).length) {
+      toast('Nenhum áudio encontrado na pasta selecionada.', 'error');
+    } else {
+      processFiles(files);
+    }
+    e.target.value = '';
+    refreshPermissionUI();
+  });
+
+  // Drag & drop
+  const dropZone = document.getElementById('drop-zone');
+  ['dragenter', 'dragover'].forEach(ev => {
+    dropZone.addEventListener(ev, e => {
+      e.preventDefault();
+      e.stopPropagation();
+      dropZone.classList.add('drop-zone-active');
+    });
+    document.body.addEventListener(ev, e => e.preventDefault());
+  });
+  ['dragleave', 'drop'].forEach(ev => {
+    dropZone.addEventListener(ev, e => {
+      e.preventDefault();
+      e.stopPropagation();
+      dropZone.classList.remove('drop-zone-active');
+    });
+  });
+  dropZone.addEventListener('drop', e => {
+    const files = Array.from(e.dataTransfer.files || []).filter(isAudioFile);
+    if (files.length) {
+      closeImportModal();
+      processFiles(files);
+    } else {
+      toast('Nenhum arquivo de áudio válido solto aqui.', 'error');
+    }
+  });
+  document.body.addEventListener('drop', e => {
+    e.preventDefault();
+    if (e.target.closest('#import-modal')) return;
+    const files = Array.from(e.dataTransfer.files || []).filter(isAudioFile);
+    if (files.length) processFiles(files);
+  });
+
+  function processFiles(files) {
+    if (!files || !files.length) {
+      toast('Nenhum arquivo de áudio encontrado', 'error');
+      return;
+    }
+    let n = 0;
+    const startLen = tracks.length;
+    files.forEach((file, i) => {
+      try {
+        const url = URL.createObjectURL(file);
+        const clean = file.name.replace(/\.[^/.]+$/, '');
+        const parts = clean.split(/\s*[-–—]\s*/);
+        const artist = parts.length > 1 ? parts[0].trim() : 'Artista Local';
+        const title = parts.length > 1 ? parts.slice(1).join(' - ').trim() : clean;
+        const ext = (file.name.split('.').pop() || 'AUDIO').toUpperCase();
+        const isHiRes = /flac|wav|aiff|aif|dsd|dsf|alac/i.test(ext);
+        tracks.push({
+          id: 'local-' + Date.now() + '-' + i + '-' + Math.random().toString(36).slice(2, 7),
+          title, artist,
+          album: file.webkitRelativePath ? file.webkitRelativePath.split('/')[0] || 'Dispositivo' : 'Dispositivo',
+          duration: 0,
+          url,
+          cover: synthCover(title, tracks.length + i),
+          bitrate: isHiRes ? `${ext} · Hi-Res Lossless` : `${ext}`,
+          format: ext
+        });
+        n++;
+      } catch (err) {
+        console.warn('Falha ao importar arquivo:', file?.name, err);
+      }
+    });
+    if (!n) {
+      toast('Não foi possível importar os arquivos (permissão ou formato).', 'error');
+      return;
+    }
+    renderAll();
+    toast(`${n} música${n > 1 ? 's' : ''} importada${n > 1 ? 's' : ''} com sucesso!`, 'success');
+    if (currentIndex === -1 && tracks.length) loadTrack(startLen);
+  }
+
+  // Initial permission UI
+  refreshPermissionUI();
+
+  // ═══════════════════════════════════════════════════════════
+  // PLAYBACK
+  // ═══════════════════════════════════════════════════════════
+  function loadTrack(idx) {
+    if (idx < 0 || idx >= tracks.length) return;
+    currentIndex = idx;
+    const t = tracks[idx];
+    audio.src = t.url;
+    audio.load();
+    document.getElementById('mini-title').textContent = t.title;
+    document.getElementById('mini-artist').textContent = t.artist;
+    document.getElementById('mini-cover').src = t.cover;
+    document.getElementById('island-title').textContent = t.title;
+    document.getElementById('island-artist').textContent = t.artist;
+    document.getElementById('island-cover').src = t.cover;
+    document.getElementById('full-title').textContent = t.title;
+    document.getElementById('full-artist').textContent = t.artist;
+    document.getElementById('full-album').textContent = t.album;
+    document.getElementById('full-cover').src = t.cover;
+    document.getElementById('full-format').textContent = t.bitrate || 'Hi-Res';
+    const img = new Image();
+    img.crossOrigin = 'anonymous';
+    img.src = t.cover;
+    img.onload = () => extractColor(img);
+    updateMediaSession(t);
+    updateFavBtn();
+    renderTracksList();
+    play();
+  }
+
+  function play() {
+    initAudio();
+    if (audioCtx.state === 'suspended') audioCtx.resume();
+    audio.play().then(() => {
+      isPlaying = true;
+      updatePlayUI();
+      vinyl.classList.remove('vinyl-paused');
+      if ('mediaSession' in navigator) navigator.mediaSession.playbackState = 'playing';
+    }).catch(console.error);
+  }
+  function pause() {
+    audio.pause();
+    isPlaying = false;
+    updatePlayUI();
+    vinyl.classList.add('vinyl-paused');
+    if ('mediaSession' in navigator) navigator.mediaSession.playbackState = 'paused';
+  }
+  function togglePlay() {
+    if (currentIndex === -1 && tracks.length) { loadTrack(0); return; }
+    isPlaying ? pause() : play();
+  }
+  function nextTrack() {
+    if (!tracks.length) return;
+    if (isShuffle) loadTrack(Math.floor(Math.random() * tracks.length));
+    else loadTrack((currentIndex + 1) % tracks.length);
+  }
+  function prevTrack() {
+    if (!tracks.length) return;
+    if (audio.currentTime > 3) { audio.currentTime = 0; return; }
+    loadTrack((currentIndex - 1 + tracks.length) % tracks.length);
+  }
+  function updatePlayUI() {
+    const icon = isPlaying ? '<i class="fa-solid fa-pause"></i>' : '<i class="fa-solid fa-play ml-0.5"></i>';
+    document.getElementById('mini-play').innerHTML = icon;
+    document.getElementById('full-play').innerHTML = icon;
+  }
+
+  audio.addEventListener('timeupdate', () => {
+    if (!isNaN(audio.duration) && audio.duration) {
+      document.getElementById('seek').value = (audio.currentTime / audio.duration) * 100;
+      document.getElementById('time-cur').textContent = fmt(audio.currentTime);
+      document.getElementById('time-dur').textContent = fmt(audio.duration);
+    }
+  });
+  audio.addEventListener('ended', () => {
+    if (repeatMode === 2) play();
+    else nextTrack();
+  });
+  document.getElementById('seek').addEventListener('input', e => {
+    if (!isNaN(audio.duration)) audio.currentTime = (e.target.value / 100) * audio.duration;
+  });
+  document.getElementById('volume').addEventListener('input', e => { audio.volume = e.target.value; });
+
+  // ═══════════════════════════════════════════════════════════
+  // RENDER
+  // ═══════════════════════════════════════════════════════════
+  function renderAll() {
+    renderTracksList();
+    renderAlbums();
+    renderArtists();
+    renderPlaylists();
+    document.getElementById('track-count').textContent = tracks.length;
+    document.getElementById('fav-count').textContent = favorites.size + ' faixas';
+  }
+
+  function renderTracksList(list) {
+    const data = list || tracks;
+    const el = document.getElementById('tracks-list');
+    if (!data.length) {
+      el.innerHTML = `
+        <div class="text-center py-14 space-y-3">
+          <i class="fa-solid fa-headphones text-4xl text-subtle opacity-50"></i>
+          <p class="text-sm text-muted">Nenhuma música carregada.</p>
+          <p class="text-[11px] text-subtle max-w-xs mx-auto">Toque em <b class="text-indigo-400">Importar</b> para adicionar arquivos do celular, ou em <b class="text-indigo-400">Demo Hi-Fi</b>.</p>
+          <button onclick="openImportModal()" class="mt-2 px-4 py-2 rounded-xl text-xs font-semibold dyn-bg text-white shadow active:scale-95 transition-all">
+            <i class="fa-solid fa-folder-open mr-1"></i> Importar músicas
+          </button>
+        </div>`;
+      return;
+    }
+    el.innerHTML = data.map((t, i) => {
+      const idx = tracks.indexOf(t);
+      const cur = idx === currentIndex;
+      const fav = favorites.has(t.id);
+      const sel = selectedIds.has(t.id);
+      return `
+        <div class="track-row flex items-center gap-2 p-2 rounded-2xl glass-card cursor-pointer transition-all ${cur ? 'active-track' : ''} ${sel ? 'ring-1 ring-indigo-500/40' : ''}"
+             onclick="onTrackClick('${t.id}', ${idx})">
+          <div class="track-check w-5 h-5 rounded-md border border-black/20 dark:border-slate-600 items-center justify-center shrink-0 ${sel ? 'bg-indigo-500 border-indigo-500' : ''}">
+            ${sel ? '<i class="fa-solid fa-check text-[10px] text-white"></i>' : ''}
+          </div>
+          <span class="w-5 text-center text-[10px] font-mono text-subtle shrink-0">${i + 1}</span>
+          <img src="${t.cover}" class="w-9 h-9 rounded-xl object-cover shrink-0" alt="">
+          <div class="flex flex-col truncate min-w-0 flex-1">
+            <span class="font-semibold text-xs truncate ${cur ? 'dyn-text' : ''}">${esc(t.title)}</span>
+            <span class="text-[10px] text-muted truncate">${esc(t.artist)}</span>
+          </div>
+          <span class="hidden sm:inline text-[10px] text-subtle truncate max-w-[100px]">${esc(t.album)}</span>
+          <span class="text-[9px] font-mono px-1.5 py-0.5 rounded bg-black/5 dark:bg-slate-900/80 text-amber-500 border border-amber-500/15 shrink-0">${esc(t.bitrate || 'Hi-Res')}</span>
+          <button onclick="event.stopPropagation(); toggleFav('${t.id}')" class="p-1.5 text-xs ${fav ? 'text-pink-500' : 'text-subtle hover:opacity-80'}">
+            <i class="fa-solid fa-heart"></i>
+          </button>
+        </div>`;
+    }).join('');
+  }
+
+  function onTrackClick(id, idx) {
+    if (selectMode) {
+      if (selectedIds.has(id)) selectedIds.delete(id);
+      else selectedIds.add(id);
+      updateSelectionBar();
+      renderTracksList();
+    } else {
+      loadTrack(idx);
+    }
+  }
+
+  function renderAlbums() {
+    const map = {};
+    tracks.forEach(t => { (map[t.album] = map[t.album] || []).push(t); });
+    const keys = Object.keys(map);
+    const el = document.getElementById('albums-grid');
+    if (!keys.length) {
+      el.innerHTML = '<p class="col-span-full text-center text-xs text-subtle py-10">Nenhum álbum.</p>';
+      return;
+    }
+    el.innerHTML = keys.map(name => {
+      const list = map[name];
+      return `
+        <div onclick="filterAlbum('${escJs(name)}')" class="p-2.5 rounded-3xl glass-card cursor-pointer group space-y-2">
+          <div class="aspect-square rounded-2xl overflow-hidden relative shadow-lg">
+            <img src="${list[0].cover}" class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300" alt="">
+            <div class="absolute inset-0 bg-black/30 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
+              <div class="w-9 h-9 rounded-full dyn-bg text-white flex items-center justify-center shadow"><i class="fa-solid fa-play ml-0.5 text-sm"></i></div>
+            </div>
+          </div>
+          <div>
+            <h4 class="font-bold text-xs truncate">${esc(name)}</h4>
+            <p class="text-[10px] text-muted">${list.length} faixa${list.length > 1 ? 's' : ''}</p>
+          </div>
+        </div>`;
+    }).join('');
+  }
+
+  function renderArtists() {
+    const map = {};
+    tracks.forEach(t => { (map[t.artist] = map[t.artist] || []).push(t); });
+    const keys = Object.keys(map);
+    const el = document.getElementById('artists-grid');
+    if (!keys.length) {
+      el.innerHTML = '<p class="col-span-full text-center text-xs text-subtle py-10">Nenhum artista.</p>';
+      return;
+    }
+    el.innerHTML = keys.map(name => {
+      const list = map[name];
+      return `
+        <div onclick="filterArtist('${escJs(name)}')" class="p-3 rounded-3xl glass-card cursor-pointer text-center space-y-2">
+          <div class="w-16 h-16 mx-auto rounded-full overflow-hidden shadow border-2 border-indigo-500/25">
+            <img src="${list[0].cover}" class="w-full h-full object-cover" alt="">
+          </div>
+          <div>
+            <h4 class="font-bold text-xs truncate">${esc(name)}</h4>
+            <p class="text-[10px] text-muted">${list.length} faixa${list.length > 1 ? 's' : ''}</p>
+          </div>
+        </div>`;
+    }).join('');
+  }
+
+  function renderPlaylists() {
+    const el = document.getElementById('playlists-list');
+    if (!playlists.length) {
+      el.innerHTML = '<p class="col-span-full text-center text-xs text-subtle py-4">Nenhuma playlist criada ainda.</p>';
+      return;
+    }
+    el.innerHTML = playlists.map((pl, i) => `
+      <div class="p-4 rounded-3xl glass-card cursor-pointer relative group" onclick="openPlaylist(${i})">
+        <div class="flex items-center gap-3">
+          <div class="w-12 h-12 rounded-2xl dyn-bg flex items-center justify-center text-white text-lg shadow">
+            <i class="fa-solid fa-list-ul"></i>
+          </div>
+          <div class="min-w-0 flex-1">
+            <h3 class="font-bold text-sm truncate">${esc(pl.name)}</h3>
+            <p class="text-[11px] text-muted">${pl.trackIds.length} faixa${pl.trackIds.length !== 1 ? 's' : ''}</p>
+          </div>
+          <button onclick="event.stopPropagation(); deletePlaylist(${i})" class="p-2 text-subtle hover:text-rose-400 opacity-0 group-hover:opacity-100 transition-all">
+            <i class="fa-solid fa-trash text-xs"></i>
+          </button>
+        </div>
+      </div>
+    `).join('');
+  }
+
+  // Selection + playlists
+  document.getElementById('select-mode-btn').addEventListener('click', () => {
+    selectMode = !selectMode;
+    selectedIds.clear();
+    document.body.classList.toggle('select-mode', selectMode);
+    document.getElementById('selection-bar').classList.toggle('hidden', !selectMode);
+    updateSelectionBar();
+    renderTracksList();
+  });
+  document.getElementById('cancel-select-btn').addEventListener('click', () => {
+    selectMode = false;
+    selectedIds.clear();
+    document.body.classList.remove('select-mode');
+    document.getElementById('selection-bar').classList.add('hidden');
+    renderTracksList();
+  });
+  function updateSelectionBar() {
+    document.getElementById('selection-count').textContent = `${selectedIds.size} selecionada${selectedIds.size !== 1 ? 's' : ''}`;
+  }
+  document.getElementById('add-to-playlist-btn').addEventListener('click', () => {
+    if (!selectedIds.size) { toast('Selecione ao menos uma música', 'error'); return; }
+    document.getElementById('playlist-modal-hint').textContent = `${selectedIds.size} música(s) serão adicionadas.`;
+    document.getElementById('playlist-name-input').value = '';
+    document.getElementById('playlist-modal').classList.remove('hidden');
+    document.getElementById('playlist-modal').classList.add('flex');
+    document.getElementById('playlist-name-input').focus();
+  });
+  document.getElementById('new-playlist-btn').addEventListener('click', () => {
+    selectedIds.clear();
+    document.getElementById('playlist-modal-hint').textContent = 'Crie a playlist e depois adicione músicas selecionando-as.';
+    document.getElementById('playlist-name-input').value = '';
+    document.getElementById('playlist-modal').classList.remove('hidden');
+    document.getElementById('playlist-modal').classList.add('flex');
+    document.getElementById('playlist-name-input').focus();
+  });
+  document.getElementById('playlist-cancel').addEventListener('click', () => {
+    document.getElementById('playlist-modal').classList.add('hidden');
+    document.getElementById('playlist-modal').classList.remove('flex');
+  });
+  document.getElementById('playlist-create').addEventListener('click', () => {
+    const name = document.getElementById('playlist-name-input').value.trim();
+    if (!name) { toast('Digite um nome para a playlist', 'error'); return; }
+    const ids = selectedIds.size ? Array.from(selectedIds) : [];
+    playlists.push({ name, trackIds: ids, created: Date.now() });
+    localStorage.setItem('hifi_playlists', JSON.stringify(playlists));
+    document.getElementById('playlist-modal').classList.add('hidden');
+    document.getElementById('playlist-modal').classList.remove('flex');
+    selectMode = false;
+    selectedIds.clear();
+    document.body.classList.remove('select-mode');
+    document.getElementById('selection-bar').classList.add('hidden');
+    renderAll();
+    switchTab('playlists');
+    toast(`Playlist "${name}" criada!`, 'success');
+  });
+  function openPlaylist(i) {
+    const pl = playlists[i];
+    if (!pl) return;
+    const list = tracks.filter(t => pl.trackIds.includes(t.id));
+    switchTab('tracks');
+    renderTracksList(list);
+    toast(`Playlist: ${pl.name}`, 'info');
+  }
+  function deletePlaylist(i) {
+    playlists.splice(i, 1);
+    localStorage.setItem('hifi_playlists', JSON.stringify(playlists));
+    renderPlaylists();
+    toast('Playlist removida', 'info');
+  }
+  function toggleFav(id) {
+    if (favorites.has(id)) favorites.delete(id);
+    else favorites.add(id);
+    localStorage.setItem('hifi_favs', JSON.stringify([...favorites]));
+    document.getElementById('fav-count').textContent = favorites.size + ' faixas';
+    updateFavBtn();
+    renderTracksList();
+  }
+  function updateFavBtn() {
+    const t = tracks[currentIndex];
+    const btn = document.getElementById('full-fav');
+    if (!t) return;
+    const on = favorites.has(t.id);
+    btn.classList.toggle('text-pink-500', on);
+    btn.classList.toggle('text-muted', !on);
+  }
+  document.getElementById('full-fav').addEventListener('click', () => {
+    if (currentIndex >= 0) toggleFav(tracks[currentIndex].id);
+  });
+  function showFavorites() {
+    switchTab('tracks');
+    renderTracksList(tracks.filter(t => favorites.has(t.id)));
+  }
+  function loadDemoFilter() {
+    switchTab('tracks');
+    renderTracksList(tracks.filter(t => t.id.startsWith('demo-')));
+  }
+  function filterAlbum(name) {
+    switchTab('tracks');
+    renderTracksList(tracks.filter(t => t.album === name));
+  }
+  function filterArtist(name) {
+    switchTab('tracks');
+    renderTracksList(tracks.filter(t => t.artist === name));
+  }
+
+  // Quality
+  document.querySelectorAll('input[name="quality"]').forEach(r => {
+    r.addEventListener('change', e => {
+      currentQuality = e.target.value;
+      const map = {
+        ldac: { sr: '96 kHz', bd: '24-bit', codec: 'LDAC', br: '990 kbps' },
+        aptx: { sr: '48 kHz', bd: '24-bit', codec: 'aptX HD', br: '420 kbps' },
+        flac: { sr: '192 kHz', bd: '24-bit', codec: 'FLAC', br: 'Lossless' },
+        dsd:  { sr: '2.8 MHz', bd: '1-bit', codec: 'DSD64', br: 'SACD' }
+      };
+      const q = map[currentQuality] || map.ldac;
+      document.getElementById('info-sr').textContent = q.sr;
+      document.getElementById('info-bd').textContent = q.bd;
+      document.getElementById('info-codec').textContent = q.codec;
+      document.getElementById('info-br').textContent = q.br;
+      document.getElementById('hires-badge').innerHTML = `<i class="fa-solid fa-bolt text-[10px]"></i><span>${q.codec} · ${q.sr}</span>`;
+      toast(`Qualidade: ${q.codec}`, 'success');
+    });
+  });
+
+  // Theme buttons
+  document.querySelectorAll('.theme-opt').forEach(btn => {
+    btn.addEventListener('click', () => applyTheme(btn.dataset.theme));
+  });
+
+  function switchTab(id) {
+    document.querySelectorAll('.tab-content').forEach(e => e.classList.add('hidden'));
+    document.getElementById('tab-' + id)?.classList.remove('hidden');
+    document.querySelectorAll('.nav-btn').forEach(b => {
+      b.classList.remove('active', 'bg-black/5', 'dark:bg-white/10', 'text-indigo-400');
+      b.classList.add('text-muted');
+    });
+    const btn = document.getElementById('nav-' + id);
+    if (btn) {
+      btn.classList.add('active', 'bg-black/5', 'dark:bg-white/10');
+      btn.classList.remove('text-muted');
+    }
+    document.querySelectorAll('nav .nav-btn').forEach(b => {
+      b.classList.remove('text-indigo-400');
+      b.classList.add('text-muted');
+    });
+    if (id === 'settings' && typeof refreshPermissionUI === 'function') {
+      refreshPermissionUI();
+    }
+  }
+
+  function openFullPlayer() {
+    document.getElementById('full-player').classList.remove('translate-y-full');
+  }
+  function closeFullPlayer() {
+    document.getElementById('full-player').classList.add('translate-y-full');
+  }
+
+  document.getElementById('shuffle-btn').addEventListener('click', function() {
+    isShuffle = !isShuffle;
+    this.classList.toggle('text-indigo-400', isShuffle);
+    this.classList.toggle('text-muted', !isShuffle);
+  });
+  document.getElementById('repeat-btn').addEventListener('click', function() {
+    repeatMode = (repeatMode + 1) % 3;
+    this.classList.toggle('text-indigo-400', repeatMode > 0);
+    this.classList.toggle('text-muted', repeatMode === 0);
+  });
+
+  document.getElementById('search-input').addEventListener('input', e => {
+    const q = e.target.value.toLowerCase();
+    renderTracksList(tracks.filter(t =>
+      t.title.toLowerCase().includes(q) || t.artist.toLowerCase().includes(q) || t.album.toLowerCase().includes(q)
+    ));
+  });
+
+  function toast(msg, type = 'info') {
+    const el = document.createElement('div');
+    const bg = type === 'success' ? 'bg-emerald-600' : type === 'error' ? 'bg-rose-600' : 'bg-slate-800';
+    el.className = `${bg} text-white px-3.5 py-2.5 rounded-2xl text-[11px] font-medium shadow-2xl flex items-center gap-2 border border-white/10 transition-all duration-300 toast-enter pointer-events-auto`;
+    el.innerHTML = `<i class="fa-solid fa-circle-info"></i><span>${esc(msg)}</span>`;
+    document.getElementById('toasts').appendChild(el);
+    requestAnimationFrame(() => el.classList.replace('toast-enter', 'toast-show'));
+    setTimeout(() => {
+      el.classList.replace('toast-show', 'toast-enter');
+      setTimeout(() => el.remove(), 300);
+    }, 3200);
+  }
+  function fmt(s) {
+    if (isNaN(s)) return '00:00';
+    const m = Math.floor(s / 60), sec = Math.floor(s % 60);
+    return `${m < 10 ? '0' : ''}${m}:${sec < 10 ? '0' : ''}${sec}`;
+  }
+  function esc(s) {
+    return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+  }
+  function escJs(s) { return String(s).replace(/'/g, "\\'"); }
+
+  document.getElementById('mini-play').addEventListener('click', togglePlay);
+  document.getElementById('full-play').addEventListener('click', togglePlay);
+  document.getElementById('mini-next').addEventListener('click', nextTrack);
+  document.getElementById('full-next').addEventListener('click', nextTrack);
+  document.getElementById('mini-prev').addEventListener('click', prevTrack);
+  document.getElementById('full-prev').addEventListener('click', prevTrack);
+  document.getElementById('demo-btn').addEventListener('click', generateDemos);
+
+  // Boot
+  applyTheme(currentThemePref);
+  window.addEventListener('load', () => {
+    generateDemos();
+    renderPlaylists();
+  });
+  </script>
+</body>
+</html>
